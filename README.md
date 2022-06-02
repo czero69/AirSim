@@ -38,7 +38,7 @@ As a workaround for 1. and 2. I rely on taking screenshots from the main camera 
 
 I will paste here a link to a branch wich is using these fixes in City Sample Demo later.
 
-![AirSim in UE5](readme-screenshots/screen1.png "AirSim cams in Ue5")
+![AirSim in UE5](readme-screenshots/screen1.jpg "AirSim cameras in Ue5")
 
 
 
