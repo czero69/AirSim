@@ -27,6 +27,8 @@ In setting.json set:
 
 Enjoy AirSim "ComputerVision" mode in UE5!
 
+### notes for City Sample Demo
+
 Warning - you may need additional adjustments to your project or AirSim to make it work properly.
 
 For example, when working with the City Sample UE5 demo I learned:
@@ -38,7 +40,7 @@ As a workaround for 1. and 2. I rely on taking screenshots from the main camera 
 
 I will paste here a link to a branch when I am using mentioned fixes in City Sample Demo.
 
-![AirSim in UE5](readme-screenshots/screen1.jpg?raw=true "AirSim depth, img, normal, cameras in Ue5. Note that normal camera is lacking Lumen and out of the screen reflections")
+![AirSim in UE5](readme-screenshots/screen1.jpg?raw=true "AirSim depth, img, normal, cameras in Ue5. Note that AirSim camera (middle) is lacking Lumen and out of the screen reflections")
 
 
 
