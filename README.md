@@ -1,6 +1,6 @@
 # Using AirSim in UE5
 
-This Branch shows how I managed to run and use the AirSim plugin in UE5. The code comments unsupported vehicle setups, which allows to compile AirSim for UE5 and use it in "ComputerVision" mode. Please note that other modes: {"Multirotor", "Car"} are not supported here and will not work properly.
+This Branch shows how I managed to run and use the AirSim plugin in UE5. The code comments unsupported vehicle setups, which allows to compile AirSim for UE5 and use it in "ComputerVision" mode. Please note that other modes: {"Multirotor", "Car"} are not supported here and will not work properly when using this branch.
 
 What works for me so far:
 - "ComputerVision" mode
@@ -8,15 +8,15 @@ What works for me so far:
 
 What does not work:
 - opticalFlow (Hsli compilation errors - not yet investigated)
-- "Multirotor" and "Car" (for now I am not bringing these as I don't need them.)
+- "Multirotor" and "Car" (for now I am not bringing these as I don't need them)
 
 ### How to compile
 
 my stack:
-- Unreal Engine 5.0.2 Release branch
+- Unreal Engine 5.0.2, Release branch
 - Visual Studio 2022 and Windows 10 SDK (10.0.19041.0)
 
-AirSim by default wants 10.0.19041.0. If you have other Windows 10 SDK versions installed, I suggest uninstalling them so Unreal Engine, Visual, or anything will not pick them by accident. Get Unreal Engine 5.0.2 Release branch (or possibly newer). For the 5.0.1 Release, you will need to fix JSON 1.2 support manually.
+AirSim by default wants to be compiled with 10.0.19041.0. If you have other Windows 10 SDK versions installed, I suggest uninstalling them so Unreal Engine/Visual Studio will not pick them by accident. Get Unreal Engine 5.0.2 Release branch (or possibly newer). For the 5.0.1 Release, you will need to fix JSON 1.2 support manually.
 
 Get code from this AirSim Branch. Compile it and add it to your Unreal Project (copy plugin dir, edit .uproject). Follow official AirSim build instructions for these.
 
@@ -34,9 +34,9 @@ For example, when working with the City Sample UE5 demo I learned:
 2. AirSim cameras are based on SceneComponent2D. This means they will not capture reflections outside of the camera view.
 3. AirSim is calling setWorldOrigin() which causes trouble for City Sample Demo. These must be commented out in the AirSim code, as it will cause a lot of glitches (spawning low-poly buildings, not drawing small mass ai crowd/traffic, crowd/traffic wrongly placed, etc.)
 
-As a workaround for 1. and 2. I rely on taking screenshots from the main camera as standard RGB image (position and FOV (90deg) for the main camera and AirSim ComputerVision camera(s) is the same).
+As a workaround for 1. and 2. I rely on taking screenshots from the main camera as standard RGB image. Position and FOV (90deg) for the main camera and AirSim ComputerVision camera(s) are the same.
 
-I will paste here a link to a branch wich is using these fixes in City Sample Demo later.
+I will paste here a link to a branch when I am using mentioned fixes in City Sample Demo.
 
 ![AirSim in UE5](readme-screenshots/screen1.jpg?raw=true "AirSim depth, img, normal, cameras in Ue5. Note that normal camera is lacking Lumen and out of the screen reflections")
 
