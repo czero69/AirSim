@@ -1,6 +1,7 @@
 #include "PIPCamera.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Components/SceneCaptureComponent2D.h"
+#include "Components/SceneCaptureComponentCube.h"
 #include "Camera/CameraComponent.h"
 #include "Engine/TextureRenderTarget2D.h"
 #include "Engine/World.h"
@@ -80,6 +81,9 @@ void APIPCamera::PostInitializeComponents()
         UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("OpticalFlowCaptureComponent"));
     captures_[Utils::toNumeric(ImageType::OpticalFlowVis)] =
         UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("OpticalFlowVisCaptureComponent"));
+
+    /* even when successfuly unlocling Lumen, the main camera and airsim camrera differs much. Let's disable Lumen for this view, and lets just try to take ScreenShots!*/
+    // captures_[Utils::toNumeric(ImageType::Scene)]->bAllowLumen = true;
 
     for (unsigned int i = 0; i < imageTypeCount(); ++i) {
         detections_[i] = NewObject<UDetectionComponent>(this);

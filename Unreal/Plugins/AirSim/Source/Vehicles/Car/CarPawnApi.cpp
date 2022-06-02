@@ -57,6 +57,7 @@ void CarPawnApi::reset()
         vehicle_api_->setCarControls(msr::airlib::CarApiBase::CarControls());
         updateMovement(msr::airlib::CarApiBase::CarControls());
 
+        /*
         auto pv = movement_->PVehicle;
         if (pv) {
             pv->mWheelsDynData.setToRestState();
@@ -64,7 +65,7 @@ void CarPawnApi::reset()
         auto pvd = movement_->PVehicleDrive;
         if (pvd) {
             pvd->mDriveDynData.setToRestState();
-        }
+        }*/
     },
                                              true);
 

@@ -86,6 +86,7 @@ ACarPawn::ACarPawn()
 void ACarPawn::setupVehicleMovementComponent()
 {
     UWheeledVehicleMovementComponent4W* movement = CastChecked<UWheeledVehicleMovementComponent4W>(getVehicleMovementComponent());
+    /*
     check(movement->WheelSetups.Num() == 4);
 
     // Wheels/Tires
@@ -151,6 +152,8 @@ void ACarPawn::setupVehicleMovementComponent()
     // Set the inertia scale. This controls how the mass of the vehicle is distributed.
     movement->InertiaTensorScale = FVector(1.0f, 1.333f, 1.2f);
     movement->bDeprecatedSpringOffsetMode = true;
+
+    */
 }
 
 void ACarPawn::NotifyHit(class UPrimitiveComponent* MyComp, class AActor* Other, class UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation,
