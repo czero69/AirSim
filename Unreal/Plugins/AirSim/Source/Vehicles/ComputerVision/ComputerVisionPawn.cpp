@@ -20,8 +20,6 @@ AComputerVisionPawn::AComputerVisionPawn()
     camera_back_center_base_ = CreateDefaultSubobject<USceneComponent>(TEXT("camera_back_center_base_"));
     camera_back_center_base_->SetRelativeLocation(FVector(0, 0, 0)); //right
 
-    // this->SetActorLocation(FVector(-72172.265625, -38796.578125, 599.999756));
-
     camera_front_center_base_->SetupAttachment(RootComponent);
     camera_front_left_base_->SetupAttachment(RootComponent);
     camera_front_right_base_->SetupAttachment(RootComponent);
