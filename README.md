@@ -5,6 +5,7 @@ This Branch shows how I managed to run and use the AirSim plugin in UE5. The cod
 What works for me so far:
 - "ComputerVision" mode
 - saving depth, normals, segmentation
+- python api to control ue5 app
 
 What does not work:
 - opticalFlow (Hsli compilation errors - not yet investigated)
@@ -27,14 +28,14 @@ In setting.json set:
 
 Enjoy AirSim "ComputerVision" mode in UE5!
 
-### notes for City Sample Demo
+### City Sample Demo - notes
 
 Warning - you may need additional adjustments to your project or AirSim to make it work properly.
 
 For example, when working with the City Sample UE5 demo I learned:
 1. AirSim secondary cameras are not working with Lumen by default.
 2. AirSim cameras are based on SceneComponent2D. This means they will not capture reflections outside of the camera view.
-3. AirSim is calling setWorldOrigin() which causes trouble for City Sample Demo. These must be commented out in the AirSim code, as it will cause a lot of glitches (spawning low-poly buildings, not drawing small mass ai crowd/traffic, crowd/traffic wrongly placed, etc.)
+3. AirSim is setting up world origin which causes trouble for City Sample Demo. SetNewWorldOrigin() methods must be commented out in the AirSim code, as it will cause a lot of glitches (spawning low-poly buildings, not drawing small mass ai crowd/traffic, crowd/traffic wrongly placed, etc.)
 
 As a workaround for 1. and 2. I rely on taking screenshots from the main camera as standard RGB image. Position and FOV (90deg) for the main camera and AirSim ComputerVision camera(s) are the same.
 
