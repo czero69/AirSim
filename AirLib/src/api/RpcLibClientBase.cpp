@@ -272,6 +272,13 @@ __pragma(warning(disable : 4239))
             return result;
         }
 
+        //Screenshot
+        bool RpcLibClientBase::simGetScreenshot()
+        {
+            bool result = pimpl_->client.call("simGetScreenshot").as<bool>();
+            return result;
+        }
+
         //CinemAirSim
         std::vector<std::string> RpcLibClientBase::simGetPresetLensSettings(const std::string& camera_name, const std::string& vehicle_name, bool external)
         {

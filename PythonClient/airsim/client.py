@@ -309,6 +309,17 @@ class VehicleClient:
         responses_raw = self.client.call('simGetImages', requests, vehicle_name, external)
         return [ImageResponse.from_msgpack(response_raw) for response_raw in responses_raw]
 
+# Takes Screenshot from main scene camera
+    def simTakeScreenshot(self):
+        """
+        Take Screenshot
+
+        Returns:
+            boolean response true if screenshot taken
+        """
+        response = self.client.call('simGetScreenshot')
+        return response
+
 
 
 #CinemAirSim

@@ -95,6 +95,9 @@ public:
                                                                    const std::string& vehicle_name, bool external) const override;
     virtual std::vector<uint8_t> getImage(ImageCaptureBase::ImageType image_type, const CameraDetails& camera_details) const override;
 
+    // Screenshot
+    virtual bool getScreenshot() const override;
+
     //CinemAirSim
     virtual std::vector<std::string> getPresetLensSettings(const CameraDetails& camera_details) override;
     virtual std::string getLensSettings(const CameraDetails& camera_details) override;

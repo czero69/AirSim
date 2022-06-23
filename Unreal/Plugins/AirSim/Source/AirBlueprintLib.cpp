@@ -79,9 +79,9 @@ void UAirBlueprintLib::setSimulatePhysics(AActor* actor, bool simulate_physics)
 ULevelStreamingDynamic* UAirBlueprintLib::loadLevel(UObject* context, const FString& level_name)
 {
     bool success{ false };
-    context->GetWorld()->SetNewWorldOrigin(FIntVector(0, 0, 0));
+    // context->GetWorld()->SetNewWorldOrigin(FIntVector(-721.720, -387.960, 6.0)); // For now disabling as it may cause troubles with low-level spawning block issues(!)
     ULevelStreamingDynamic* new_level = UAirsimLevelStreaming::LoadAirsimLevelInstance(
-        context->GetWorld(), level_name, FVector(0, 0, 0), FRotator(0, 0, 0), success);
+        context->GetWorld(), level_name, FVector(-721.720, -387.960, 2.0), FRotator(0, 0, 13.0), success);
     if (success) {
         if (CURRENT_LEVEL != nullptr && CURRENT_LEVEL->IsValidLowLevel())
             CURRENT_LEVEL->SetShouldBeLoaded(false);
@@ -101,7 +101,7 @@ bool UAirBlueprintLib::spawnPlayer(UWorld* context)
             if (player_start->GetName() != FString("SuperStart")) {
                 //context->GetWorld()->SetNewWorldOrigin(FIntVector(0, 0, 0));
                 auto location = player_start->GetActorLocation();
-                context->RequestNewWorldOrigin(FIntVector(location.X, location.Y, location.Z));
+                // context->RequestNewWorldOrigin(FIntVector(location.X, location.Y, location.Z));
                 success = true;
                 break;
             }

@@ -918,6 +918,51 @@ std::vector<uint8_t> WorldSimApi::getImage(ImageCaptureBase::ImageType image_typ
         return std::vector<uint8_t>();
 }
 
+//Screenshot
+
+bool WorldSimApi::getScreenshot() const
+{
+    // @TODO save images from main camera
+    // This functionality is not yet ready. This needs to have same FOV (90 default) and position of main camera as Airsim.
+    // When using computer vision mode in Lumen, I decided to relay on images taken from main camera instead of Airsim cameras.
+    // The reasons are like follow: Main camera have correct image in every respect. Lumen RGB camera does not support Lumen, 
+    // visibility angle is restricted by Scene Component 2D (no reflections from the outside of the camera), no aliasing by default and more.
+    // For now, code below is very inefficient as it blocks rendering thread. 
+    // But as a fast workaround, It may be fine if someone is controlling camera from Airsim python api, pausing a game, moving camera manually and grabbing/saving images.
+    // So in controlled Airsim python api this solution make sense. For 'live' recording it will make fps down and stutters
+    // There should be approach with FrameGrabber to implement it on separate thread and speed things up.
+
+
+    // Generate a filename based on the current date
+    const FDateTime Now = FDateTime::Now();
+    // store screenshot in Project directory next to main UProject/EXE based on the build type
+#if WITH_EDITOR
+    const FString ImageDirectory = FString::Printf(TEXT("%s/%s"), *FPaths::ProjectDir(), TEXT("Screenshots"));
+#else
+    const FString ImageDirectory = FString::Printf(TEXT("%s/../%s"), *FPaths::ProjectDir(), TEXT("Screenshots"));
+#endif
+    const FString ImageFilename = FString::Printf(TEXT("%s/Screenshot_%d%02d%02d_%02d%02d%02d_%03d.png"), *ImageDirectory, Now.GetYear(), Now.GetMonth(), Now.GetDay(), Now.GetHour(), Now.GetMinute(), Now.GetSecond(), Now.GetMillisecond());
+    UE_LOG(LogTemp, Warning, TEXT("Taking screenshot here: %s"), *ImageFilename);
+    // FScreenshotRequest::RequestScreenshot(ImageFilename, false, false);
+
+    // @TODO below is the replacement to save screens in same dir as Airsim data, 
+    // but something is Wrong with Windows patches (possibly wrong direction of '/')
+    /*
+    std::ostringstream screenshot_name;
+    screenshot_name << "img_"
+        << vehicle_sim_api->getVehicleName() << "_"
+        << "screenshot" << "_" << common_utils::Utils::getTimeSinceEpochNanos() << ".png";
+
+    std::string screenshot_file_path = common_utils::FileSystem::combine(image_path_, screenshot_name.str());
+    const FString ScreenshotFilename = FString(screenshot_file_path.c_str());
+    //UE_LOG(LogTemp, Warning, TEXT("%s"), *ScreenshotFilename);
+    FScreenshotRequest::RequestScreenshot(ScreenshotFilename, false, false);
+    */
+
+    bool succeess = true;
+    return succeess;
+}
+
 //CinemAirSim
 std::vector<std::string> WorldSimApi::getPresetLensSettings(const CameraDetails& camera_details)
 {

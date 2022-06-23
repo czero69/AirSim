@@ -112,7 +112,7 @@ void ASimModeBase::BeginPlay()
     player_loc = player_start_transform.GetLocation();
     // Move the world origin to the player's location (this moves the coordinate system and adds
     // a corresponding offset to all positions to compensate for the shift)
-    this->GetWorld()->SetNewWorldOrigin(FIntVector(player_loc) + this->GetWorld()->OriginLocation);
+    // this->GetWorld()->SetNewWorldOrigin(FIntVector(player_loc) + this->GetWorld()->OriginLocation); // potentially need to be disabled
     // Regrab the player's position after the offset has been added (which should be 0,0,0 now)
     player_start_transform = fpv_pawn->GetActorTransform();
     global_ned_transform_.reset(new NedTransform(player_start_transform,

@@ -104,6 +104,9 @@ namespace airlib
                                                                        const std::string& vehicle_name, bool external) const = 0;
         virtual std::vector<uint8_t> getImage(ImageCaptureBase::ImageType image_type, const CameraDetails& camera_details) const = 0;
 
+        //Screenshot
+        virtual bool getScreenshot() const = 0;
+
         //CinemAirSim
         virtual std::vector<std::string> getPresetLensSettings(const CameraDetails& camera_details) = 0;
         virtual std::string getLensSettings(const CameraDetails& camera_details) = 0;

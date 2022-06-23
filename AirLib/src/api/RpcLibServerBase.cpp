@@ -153,6 +153,11 @@ namespace airlib
             return getWorldSimApi()->getImage(type, CameraDetails(camera_name, vehicle_name, external));
         });
 
+        // take Screenshot
+        pimpl_->server.bind("simGetScreenshot", [&]() -> bool {
+            return getWorldSimApi()->getScreenshot();
+            });
+
         //CinemAirSim
         pimpl_->server.bind("simGetPresetLensSettings", [&](const std::string& camera_name, const std::string& vehicle_name, bool external) -> vector<string> {
             return getWorldSimApi()->getPresetLensSettings(CameraDetails(camera_name, vehicle_name, external));
