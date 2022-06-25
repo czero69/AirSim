@@ -920,7 +920,7 @@ std::vector<uint8_t> WorldSimApi::getImage(ImageCaptureBase::ImageType image_typ
 
 //Screenshot
 
-bool WorldSimApi::getScreenshot() const
+bool WorldSimApi::getScreenshot(const std::string& file_path) const
 {
     // @TODO save images from main camera
     // This functionality is not yet ready. This needs to have same FOV (90 default) and position of main camera as Airsim.
@@ -932,18 +932,22 @@ bool WorldSimApi::getScreenshot() const
     // So in controlled Airsim python api this solution make sense. For 'live' recording it will make fps down and stutters
     // There should be approach with FrameGrabber to implement it on separate thread and speed things up.
 
-
+    FString ImageFilename;
     // Generate a filename based on the current date
     const FDateTime Now = FDateTime::Now();
     // store screenshot in Project directory next to main UProject/EXE based on the build type
+    if (file_path == "") {
 #if WITH_EDITOR
-    const FString ImageDirectory = FString::Printf(TEXT("%s/%s"), *FPaths::ProjectDir(), TEXT("Screenshots"));
+        const FString ImageDirectory = FString::Printf(TEXT("%s/%s"), *FPaths::ProjectDir(), TEXT("Screenshots"));
 #else
-    const FString ImageDirectory = FString::Printf(TEXT("%s/../%s"), *FPaths::ProjectDir(), TEXT("Screenshots"));
+        const FString ImageDirectory = FString::Printf(TEXT("%s/../%s"), *FPaths::ProjectDir(), TEXT("Screenshots"));
 #endif
-    const FString ImageFilename = FString::Printf(TEXT("%s/Screenshot_%d%02d%02d_%02d%02d%02d_%03d.png"), *ImageDirectory, Now.GetYear(), Now.GetMonth(), Now.GetDay(), Now.GetHour(), Now.GetMinute(), Now.GetSecond(), Now.GetMillisecond());
+        ImageFilename = FString::Printf(TEXT("%s/Screenshot_%d%02d%02d_%02d%02d%02d_%03d.png"), *ImageDirectory, Now.GetYear(), Now.GetMonth(), Now.GetDay(), Now.GetHour(), Now.GetMinute(), Now.GetSecond(), Now.GetMillisecond());
+    }
+    else
+        ImageFilename = FString(file_path.c_str());
     UE_LOG(LogTemp, Warning, TEXT("Taking screenshot here: %s"), *ImageFilename);
-    // FScreenshotRequest::RequestScreenshot(ImageFilename, false, false);
+    FScreenshotRequest::RequestScreenshot(ImageFilename, false, false);
 
     // @TODO below is the replacement to save screens in same dir as Airsim data, 
     // but something is Wrong with Windows patches (possibly wrong direction of '/')
@@ -961,6 +965,17 @@ bool WorldSimApi::getScreenshot() const
 
     bool succeess = true;
     return succeess;
+}
+
+float WorldSimApi::setGameSpeed(float dilation) const
+{
+    //AWorldSettings* some_settings = UWorld::GetWorldSettings(false, false);
+    //UWorld::GetWorldSettings->SetTimeDilation(dilation);
+    //AWorldSettings::SetTimeDilation(dilation);
+    UE_LOG(LogTemp, Warning, TEXT("Setting Game speed, %f"), dilation);
+    UGameplayStatics::SetGlobalTimeDilation(simmode_->GetWorld(), dilation);
+
+    return dilation;
 }
 
 //CinemAirSim

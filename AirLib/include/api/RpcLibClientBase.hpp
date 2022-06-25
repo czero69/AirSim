@@ -115,7 +115,10 @@ namespace airlib
         vector<uint8_t> simGetImage(const std::string& camera_name, ImageCaptureBase::ImageType type, const std::string& vehicle_name = "", bool external = false);
 
         //Screenshot
-        bool simGetScreenshot();
+        bool simGetScreenshot(const std::string& file_path);
+
+        //Screenshot
+        float simSetGameSpeed(float dilation);
 
         //CinemAirSim
         std::vector<std::string> simGetPresetLensSettings(const std::string& camera_name, const std::string& vehicle_name = "", bool external = false);

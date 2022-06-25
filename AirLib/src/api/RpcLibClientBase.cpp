@@ -273,9 +273,16 @@ __pragma(warning(disable : 4239))
         }
 
         //Screenshot
-        bool RpcLibClientBase::simGetScreenshot()
+        bool RpcLibClientBase::simGetScreenshot(const std::string& file_path)
         {
-            bool result = pimpl_->client.call("simGetScreenshot").as<bool>();
+            bool result = pimpl_->client.call("simGetScreenshot", file_path).as<bool>();
+            return result;
+        }
+
+        // set game speed
+        float RpcLibClientBase::simSetGameSpeed(float dilation)
+        {
+            float result = pimpl_->client.call("simSetGameSpeed", dilation).as<float>();
             return result;
         }
 

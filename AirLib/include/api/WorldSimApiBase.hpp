@@ -105,7 +105,9 @@ namespace airlib
         virtual std::vector<uint8_t> getImage(ImageCaptureBase::ImageType image_type, const CameraDetails& camera_details) const = 0;
 
         //Screenshot
-        virtual bool getScreenshot() const = 0;
+        virtual bool getScreenshot(const std::string& file_path) const = 0;
+        // set game speed
+        virtual float setGameSpeed(float dilation) const = 0;
 
         //CinemAirSim
         virtual std::vector<std::string> getPresetLensSettings(const CameraDetails& camera_details) = 0;

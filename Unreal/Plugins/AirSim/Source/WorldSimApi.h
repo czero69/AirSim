@@ -96,7 +96,9 @@ public:
     virtual std::vector<uint8_t> getImage(ImageCaptureBase::ImageType image_type, const CameraDetails& camera_details) const override;
 
     // Screenshot
-    virtual bool getScreenshot() const override;
+    virtual bool getScreenshot(const std::string& file_path) const override;
+    // set game speed
+    virtual float setGameSpeed(float dilation) const override;
 
     //CinemAirSim
     virtual std::vector<std::string> getPresetLensSettings(const CameraDetails& camera_details) override;

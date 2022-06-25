@@ -310,14 +310,25 @@ class VehicleClient:
         return [ImageResponse.from_msgpack(response_raw) for response_raw in responses_raw]
 
 # Takes Screenshot from main scene camera
-    def simTakeScreenshot(self):
+    def simTakeScreenshot(self, filepath):
         """
         Take Screenshot
 
         Returns:
             boolean response true if screenshot taken
         """
-        response = self.client.call('simGetScreenshot')
+        response = self.client.call('simGetScreenshot', filepath)
+        return response
+
+    # Takes Screenshot from main scene camera
+    def simSetGameSpeed(self, dilation):
+        """
+        Take Screenshot
+
+        Returns:
+            boolean response true if screenshot taken
+        """
+        response = self.client.call('simSetGameSpeed', dilation)
         return response
 
 

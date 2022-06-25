@@ -154,9 +154,14 @@ namespace airlib
         });
 
         // take Screenshot
-        pimpl_->server.bind("simGetScreenshot", [&]() -> bool {
-            return getWorldSimApi()->getScreenshot();
+        pimpl_->server.bind("simGetScreenshot", [&](const std::string& file_path) -> bool {
+            return getWorldSimApi()->getScreenshot(file_path);
             });
+
+        // set game speed
+        pimpl_->server.bind("simSetGameSpeed", [&](float dilation) -> bool {
+            return getWorldSimApi()->setGameSpeed(dilation);
+        });
 
         //CinemAirSim
         pimpl_->server.bind("simGetPresetLensSettings", [&](const std::string& camera_name, const std::string& vehicle_name, bool external) -> vector<string> {
