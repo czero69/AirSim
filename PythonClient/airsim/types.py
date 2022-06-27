@@ -41,6 +41,12 @@ class _ImageType(type):
         return 8
     def OpticalFlowVis(cls):
         return 9
+    def Velocity(cls):
+        return 9
+    def ShaderID(cls):
+        return 9
+    def TextureUV(cls):
+        return 9
 
     def __getattr__(self, key):
         if key == 'DepthPlanner':

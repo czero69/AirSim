@@ -46,6 +46,9 @@ APIPCamera::APIPCamera(const FObjectInitializer& ObjectInitializer)
     image_type_to_pixel_format_map_.Add(Utils::toNumeric(ImageType::Infrared), EPixelFormat::PF_B8G8R8A8);
     image_type_to_pixel_format_map_.Add(Utils::toNumeric(ImageType::OpticalFlow), EPixelFormat::PF_B8G8R8A8);
     image_type_to_pixel_format_map_.Add(Utils::toNumeric(ImageType::OpticalFlowVis), EPixelFormat::PF_B8G8R8A8);
+    image_type_to_pixel_format_map_.Add(Utils::toNumeric(ImageType::Velocity), EPixelFormat::PF_B8G8R8A8);
+    image_type_to_pixel_format_map_.Add(Utils::toNumeric(ImageType::ShaderID), EPixelFormat::PF_B8G8R8A8);
+    image_type_to_pixel_format_map_.Add(Utils::toNumeric(ImageType::TextureUV), EPixelFormat::PF_B8G8R8A8);
 
     object_filter_ = FObjectFilter();
 }
@@ -80,6 +83,12 @@ void APIPCamera::PostInitializeComponents()
         UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("OpticalFlowCaptureComponent"));
     captures_[Utils::toNumeric(ImageType::OpticalFlowVis)] =
         UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("OpticalFlowVisCaptureComponent"));
+    captures_[Utils::toNumeric(ImageType::Velocity)] =
+        UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("VelocityCaptureComponent"));
+    captures_[Utils::toNumeric(ImageType::ShaderID)] =
+        UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("ShaderIDCaptureComponent"));
+    captures_[Utils::toNumeric(ImageType::TextureUV)] =
+        UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("TextureUVCaptureComponent"));
 
     for (unsigned int i = 0; i < imageTypeCount(); ++i) {
         detections_[i] = NewObject<UDetectionComponent>(this);

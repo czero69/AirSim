@@ -28,6 +28,9 @@ namespace airlib
             Infrared,
             OpticalFlow,
             OpticalFlowVis,
+            Velocity,
+            ShaderID, // actually shader ID
+            TextureUV,
             Count //must be last
         };
 
