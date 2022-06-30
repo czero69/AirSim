@@ -64,6 +64,9 @@ class ImageType(metaclass=_ImageType):
     Infrared = 7
     OpticalFlow = 8
     OpticalFlowVis = 9
+    Velocity = 10
+    ShaderID = 11
+    TextureUV = 12
 
 class DrivetrainType:
     MaxDegreeOfFreedom = 0
