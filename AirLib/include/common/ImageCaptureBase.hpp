@@ -31,6 +31,17 @@ namespace airlib
             Velocity,
             ShaderID, // actually shader ID
             TextureUV,
+            SceneDepth,
+            ReflectionVector,
+            DotSurfaceReflection,
+            Metallic,
+            Albedo,
+            Specular,
+            Opacity,
+            Roughness,
+            Anisotropy,
+            AO,
+            ShadingModelColor,
             Count //must be last
         };
 

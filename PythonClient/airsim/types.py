@@ -42,11 +42,33 @@ class _ImageType(type):
     def OpticalFlowVis(cls):
         return 9
     def Velocity(cls):
-        return 9
+        return 10
     def ShaderID(cls):
-        return 9
+        return 11
     def TextureUV(cls):
-        return 9
+        return 12
+    def SceneDepth(cls):
+        return 13
+    def ReflectionVector(cls):
+        return 14
+    def DotSurfaceReflection(cls):
+        return 15
+    def Metallic(cls):
+        return 16
+    def Albedo(cls):
+        return 17
+    def Specular(cls):
+        return 18
+    def Opacity(cls):
+        return 19
+    def Roughness(cls):
+        return 20
+    def Anisotropy(cls):
+        return 21
+    def AO(cls):
+        return 22
+    def ShadingModelColor(cls):
+        return 23
 
     def __getattr__(self, key):
         if key == 'DepthPlanner':
@@ -67,6 +89,17 @@ class ImageType(metaclass=_ImageType):
     Velocity = 10
     ShaderID = 11
     TextureUV = 12
+    SceneDepth = 13
+    ReflectionVector = 14
+    DotSurfaceReflection = 15
+    Metallic = 16
+    Albedo = 17
+    Specular = 18
+    Opacity = 19
+    Roughness = 20
+    Anisotropy = 21
+    AO = 22
+    ShadingModelColor = 23
 
 class DrivetrainType:
     MaxDegreeOfFreedom = 0

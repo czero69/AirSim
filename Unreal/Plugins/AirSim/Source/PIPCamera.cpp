@@ -49,6 +49,17 @@ APIPCamera::APIPCamera(const FObjectInitializer& ObjectInitializer)
     image_type_to_pixel_format_map_.Add(Utils::toNumeric(ImageType::Velocity), EPixelFormat::PF_B8G8R8A8);
     image_type_to_pixel_format_map_.Add(Utils::toNumeric(ImageType::ShaderID), EPixelFormat::PF_B8G8R8A8);
     image_type_to_pixel_format_map_.Add(Utils::toNumeric(ImageType::TextureUV), EPixelFormat::PF_B8G8R8A8);
+    image_type_to_pixel_format_map_.Add(Utils::toNumeric(ImageType::SceneDepth), EPixelFormat::PF_DepthStencil);
+    image_type_to_pixel_format_map_.Add(Utils::toNumeric(ImageType::ReflectionVector), EPixelFormat::PF_B8G8R8A8);
+    image_type_to_pixel_format_map_.Add(Utils::toNumeric(ImageType::DotSurfaceReflection), EPixelFormat::PF_B8G8R8A8);
+    image_type_to_pixel_format_map_.Add(Utils::toNumeric(ImageType::Metallic), EPixelFormat::PF_B8G8R8A8);
+    image_type_to_pixel_format_map_.Add(Utils::toNumeric(ImageType::Albedo), EPixelFormat::PF_B8G8R8A8);
+    image_type_to_pixel_format_map_.Add(Utils::toNumeric(ImageType::Specular), EPixelFormat::PF_B8G8R8A8);
+    image_type_to_pixel_format_map_.Add(Utils::toNumeric(ImageType::Opacity), EPixelFormat::PF_B8G8R8A8);
+    image_type_to_pixel_format_map_.Add(Utils::toNumeric(ImageType::Roughness), EPixelFormat::PF_B8G8R8A8);
+    image_type_to_pixel_format_map_.Add(Utils::toNumeric(ImageType::Anisotropy), EPixelFormat::PF_B8G8R8A8);
+    image_type_to_pixel_format_map_.Add(Utils::toNumeric(ImageType::AO), EPixelFormat::PF_B8G8R8A8);
+    image_type_to_pixel_format_map_.Add(Utils::toNumeric(ImageType::ShadingModelColor), EPixelFormat::PF_B8G8R8A8);
 
     object_filter_ = FObjectFilter();
 }
@@ -89,6 +100,28 @@ void APIPCamera::PostInitializeComponents()
         UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("ShaderIDCaptureComponent"));
     captures_[Utils::toNumeric(ImageType::TextureUV)] =
         UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("TextureUVCaptureComponent"));
+    captures_[Utils::toNumeric(ImageType::SceneDepth)] =
+        UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("SceneDepthCaptureComponent"));
+    captures_[Utils::toNumeric(ImageType::ReflectionVector)] =
+        UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("ReflectionVectorCaptureComponent"));
+    captures_[Utils::toNumeric(ImageType::DotSurfaceReflection)] =
+        UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("DotSurfaceReflectionCaptureComponent"));
+    captures_[Utils::toNumeric(ImageType::Metallic)] =
+        UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("MetallicCaptureComponent"));
+    captures_[Utils::toNumeric(ImageType::Albedo)] =
+        UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("AlbedoCaptureComponent"));
+    captures_[Utils::toNumeric(ImageType::Specular)] =
+        UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("SpecularCaptureComponent"));
+    captures_[Utils::toNumeric(ImageType::Opacity)] =
+        UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("OpacityCaptureComponent"));
+    captures_[Utils::toNumeric(ImageType::Roughness)] =
+        UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("RoughnessCaptureComponent"));
+    captures_[Utils::toNumeric(ImageType::Anisotropy)] =
+        UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("AnisotropyCaptureComponent"));
+    captures_[Utils::toNumeric(ImageType::AO)] =
+        UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("AOCaptureComponent"));
+    captures_[Utils::toNumeric(ImageType::ShadingModelColor)] =
+        UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("ShadingModelColorCaptureComponent"));
 
     for (unsigned int i = 0; i < imageTypeCount(); ++i) {
         detections_[i] = NewObject<UDetectionComponent>(this);
