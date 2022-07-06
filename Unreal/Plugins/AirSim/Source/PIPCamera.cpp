@@ -480,6 +480,7 @@ void APIPCamera::updateCaptureComponentSetting(USceneCaptureComponent2D* capture
     if (capture->ProjectionType == ECameraProjectionMode::Orthographic && !std::isnan(setting.ortho_width))
         capture->OrthoWidth = ned_transform.fromNed(setting.ortho_width);
 
+    capture->ShowFlags.SetTemporalAA(true);
     updateCameraPostProcessingSetting(capture->PostProcessSettings, setting);
 }
 
@@ -496,6 +497,7 @@ void APIPCamera::updateCameraSetting(UCineCameraComponent* camera, const Capture
     if (camera->ProjectionMode == ECameraProjectionMode::Orthographic && !std::isnan(setting.ortho_width))
         camera->SetOrthoWidth(ned_transform.fromNed(setting.ortho_width));
 
+    capture->ShowFlags.SetTemporalAA(true);
     updateCameraPostProcessingSetting(camera->PostProcessSettings, setting);
 }
 
