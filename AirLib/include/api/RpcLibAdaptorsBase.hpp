@@ -543,7 +543,7 @@ namespace airlib_rpclib
             msr::airlib::ImageCaptureBase::ImageType image_type;
 
             MSGPACK_DEFINE_MAP(image_data_uint8, image_data_float, image_data_float_RGB, camera_position, camera_name,
-                               camera_orientation, time_stamp, message, pixels_as_float, compress, width, height, image_type);
+                               camera_orientation, time_stamp, message, pixels_as_float, pixels_as_float_RGB, compress, width, height, image_type);
 
             ImageResponse()
             {

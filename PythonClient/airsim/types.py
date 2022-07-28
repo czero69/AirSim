@@ -395,11 +395,13 @@ class ImageRequest(MsgpackMixin):
 class ImageResponse(MsgpackMixin):
     image_data_uint8 = np.uint8(0)
     image_data_float = 0.0
+    image_data_float_RGB = 0.0
     camera_position = Vector3r()
     camera_orientation = Quaternionr()
     time_stamp = np.uint64(0)
     message = ''
     pixels_as_float = 0.0
+    pixels_as_float_RGB = 0.0
     compress = True
     width = 0
     height = 0
