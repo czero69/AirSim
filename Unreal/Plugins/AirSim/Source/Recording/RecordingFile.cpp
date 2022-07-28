@@ -24,6 +24,8 @@ void RecordingFile::appendRecord(const std::vector<msr::airlib::ImageCaptureBase
         std::string extension;
         if (response.pixels_as_float)
             extension = ".pfm";
+        else if (response.pixels_as_float_RGB)
+            extension = ".pfm";
         else if (response.compress)
             extension = ".png";
         else
@@ -40,6 +42,11 @@ void RecordingFile::appendRecord(const std::vector<msr::airlib::ImageCaptureBase
         try {
             if (extension == ".pfm") {
                 common_utils::Utils::writePFMfile(response.image_data_float.data(), response.width, response.height, image_full_file_path);
+            }
+            else if (extension == ".pfm" && response.pixels_as_float_RGB) {
+                // Not implemented
+                std::logic_error("Function not yet implemented. I am using Python API and not Airsim Recording functionality.");
+                common_utils::Utils::writePFMfile(response.image_data_float_RGB.data(), response.width, response.height, image_full_file_path);
             }
             else if (extension == ".ppm") {
                 common_utils::Utils::writePPMfile(response.image_data_uint8.data(), response.width, response.height, image_full_file_path);

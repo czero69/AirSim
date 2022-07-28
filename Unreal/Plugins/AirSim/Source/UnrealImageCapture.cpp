@@ -69,7 +69,7 @@ void UnrealImageCapture::getSceneCaptureImage(const std::vector<msr::airlib::Ima
         else
             textureTarget = capture->TextureTarget;
 
-        render_params.push_back(std::make_shared<RenderRequest::RenderParams>(capture, textureTarget, requests[i].pixels_as_float, requests[i].compress));
+        render_params.push_back(std::make_shared<RenderRequest::RenderParams>(capture, textureTarget, requests[i].pixels_as_float, requests[i].pixels_as_float_RGB, requests[i].compress));
     }
 
     if (nullptr == gameViewport) {
@@ -99,6 +99,7 @@ void UnrealImageCapture::getSceneCaptureImage(const std::vector<msr::airlib::Ima
         response.time_stamp = render_results[i]->time_stamp;
         response.image_data_uint8 = std::vector<uint8_t>(render_results[i]->image_data_uint8.GetData(), render_results[i]->image_data_uint8.GetData() + render_results[i]->image_data_uint8.Num());
         response.image_data_float = std::vector<float>(render_results[i]->image_data_float.GetData(), render_results[i]->image_data_float.GetData() + render_results[i]->image_data_float.Num());
+        response.image_data_float_RGB = std::vector<float>(render_results[i]->image_data_float_RGB.GetData(), render_results[i]->image_data_float_RGB.GetData() + render_results[i]->image_data_float_RGB.Num());
 
         if (use_safe_method) {
             // Currently, we don't have a way to synthronize image capturing and camera pose when safe method is used,
@@ -108,6 +109,7 @@ void UnrealImageCapture::getSceneCaptureImage(const std::vector<msr::airlib::Ima
             response.camera_orientation = pose.orientation;
         }
         response.pixels_as_float = request.pixels_as_float;
+        response.pixels_as_float_RGB = request.pixels_as_float_RGB;
         response.compress = request.compress;
         response.width = render_results[i]->width;
         response.height = render_results[i]->height;

@@ -16,6 +16,7 @@ public:
         USceneCaptureComponent2D* const render_component;
         UTextureRenderTarget2D* render_target;
         bool pixels_as_float;
+        bool pixels_as_float_RGB;
         bool compress;
 
         RenderParams(USceneCaptureComponent2D* render_component_val, UTextureRenderTarget2D* render_target_val, bool pixels_as_float_val, bool compress_val)
@@ -27,9 +28,11 @@ public:
     {
         TArray<uint8> image_data_uint8;
         TArray<float> image_data_float;
+        TArray<float> image_data_float_RGB;
 
         TArray<FColor> bmp;
         TArray<FFloat16Color> bmp_float;
+        TArray<FFloat16Color> bmp_float_RGB;
 
         int width;
         int height;

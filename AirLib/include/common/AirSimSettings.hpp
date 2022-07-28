@@ -699,10 +699,11 @@ namespace airlib
                                 req_camera_settings.getInt("ImageType", 0));
                             bool compress = req_camera_settings.getBool("Compress", true);
                             bool pixels_as_float = req_camera_settings.getBool("PixelsAsFloat", false);
+                            bool pixels_as_float_RGB = req_camera_settings.getBool("PixelsAsFloatRGB", false);
                             std::string vehicle_name = req_camera_settings.getString("VehicleName", default_vehicle_name);
 
                             recording_setting.requests[vehicle_name].push_back(ImageCaptureBase::ImageRequest(
-                                camera_name, image_type, pixels_as_float, compress));
+                                camera_name, image_type, pixels_as_float, pixels_as_float_RGB, compress));
                         }
                     }
                 }

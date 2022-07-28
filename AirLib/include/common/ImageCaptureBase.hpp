@@ -50,6 +50,7 @@ namespace airlib
             std::string camera_name;
             ImageCaptureBase::ImageType image_type = ImageCaptureBase::ImageType::Scene;
             bool pixels_as_float = false;
+            bool pixels_as_float_RGB = false;
             bool compress = true;
 
             ImageRequest()
@@ -59,10 +60,12 @@ namespace airlib
             ImageRequest(const std::string& camera_name_val,
                          ImageCaptureBase::ImageType image_type_val,
                          bool pixels_as_float_val = false,
+                         bool pixels_as_float_RGB_val = false,
                          bool compress_val = true)
                 : camera_name(camera_name_val)
                 , image_type(image_type_val)
                 , pixels_as_float(pixels_as_float_val)
+                , pixels_as_float_RGB(pixels_as_float_RGB_val)
                 , compress(compress_val)
             {
             }
@@ -72,6 +75,7 @@ namespace airlib
         {
             vector<uint8_t> image_data_uint8;
             vector<float> image_data_float;
+            vector<float> image_data_float_RGB;
 
             std::string camera_name;
             Vector3r camera_position = Vector3r::Zero();
@@ -79,6 +83,7 @@ namespace airlib
             TTimePoint time_stamp = 0;
             std::string message;
             bool pixels_as_float = false;
+            bool pixels_as_float_RGB = false;
             bool compress = true;
             int width = 0, height = 0;
             ImageType image_type;

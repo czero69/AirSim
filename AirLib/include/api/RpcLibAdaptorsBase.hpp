@@ -482,9 +482,10 @@ namespace airlib_rpclib
             std::string camera_name;
             msr::airlib::ImageCaptureBase::ImageType image_type;
             bool pixels_as_float;
+            bool pixels_as_float_RGB;
             bool compress;
 
-            MSGPACK_DEFINE_MAP(camera_name, image_type, pixels_as_float, compress);
+            MSGPACK_DEFINE_MAP(camera_name, image_type, pixels_as_float, pixels_as_float_RGB, compress);
 
             ImageRequest()
             {
@@ -494,13 +495,14 @@ namespace airlib_rpclib
                 : camera_name(s.camera_name)
                 , image_type(s.image_type)
                 , pixels_as_float(s.pixels_as_float)
+                , pixels_as_float_RGB(s.pixels_as_float_RGB)
                 , compress(s.compress)
             {
             }
 
             msr::airlib::ImageCaptureBase::ImageRequest to() const
             {
-                return { camera_name, image_type, pixels_as_float, compress };
+                return { camera_name, image_type, pixels_as_float, pixels_as_float_RGB, compress };
             }
 
             static std::vector<ImageRequest> from(
@@ -527,6 +529,7 @@ namespace airlib_rpclib
         {
             std::vector<uint8_t> image_data_uint8;
             std::vector<float> image_data_float;
+            std::vector<float> image_data_float_RGB;
 
             std::string camera_name;
             Vector3r camera_position;
@@ -534,11 +537,12 @@ namespace airlib_rpclib
             msr::airlib::TTimePoint time_stamp;
             std::string message;
             bool pixels_as_float;
+            bool pixels_as_float_RGB;
             bool compress;
             int width, height;
             msr::airlib::ImageCaptureBase::ImageType image_type;
 
-            MSGPACK_DEFINE_MAP(image_data_uint8, image_data_float, camera_position, camera_name,
+            MSGPACK_DEFINE_MAP(image_data_uint8, image_data_float, image_data_float_RGB, camera_position, camera_name,
                                camera_orientation, time_stamp, message, pixels_as_float, compress, width, height, image_type);
 
             ImageResponse()
@@ -548,9 +552,12 @@ namespace airlib_rpclib
             ImageResponse(const msr::airlib::ImageCaptureBase::ImageResponse& s)
             {
                 pixels_as_float = s.pixels_as_float;
+                pixels_as_float_RGB = s.pixels_as_float_RGB;
 
                 image_data_uint8 = s.image_data_uint8;
                 image_data_float = s.image_data_float;
+                image_data_float_RGB = s.image_data_float_RGB;
+
 
                 camera_name = s.camera_name;
                 camera_position = Vector3r(s.camera_position);
@@ -568,11 +575,14 @@ namespace airlib_rpclib
                 msr::airlib::ImageCaptureBase::ImageResponse d;
 
                 d.pixels_as_float = pixels_as_float;
+                d.pixels_as_float_RGB = pixels_as_float_RGB;
 
-                if (!pixels_as_float)
-                    d.image_data_uint8 = image_data_uint8;
-                else
+                if (pixels_as_float)
                     d.image_data_float = image_data_float;
+                else if (pixels_as_float_RGB)
+                    d.image_data_float_RGB = image_data_float_RGB;
+                else
+                    d.image_data_uint8 = image_data_uint8;
 
                 d.camera_name = camera_name;
                 d.camera_position = camera_position.to();
