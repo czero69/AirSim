@@ -153,7 +153,7 @@ for x in range(300):
     # client.simPause(True)
     # client.simSetVehiclePose(airsim.Pose(airsim.Vector3r(0, 0, 0), airsim.to_quaternion(0, 0, 0)), True)
     client.simPause(True)
-    time.sleep(1.0)
+    time.sleep(1.0) # @todo, does it help here (?)
     # call it as early as possible, before velocity buffer gets erased (hack)
     #responses_velocity = client.simGetImages([
         #airsim.ImageRequest("0", airsim.ImageType.Velocity)])
@@ -162,13 +162,14 @@ for x in range(300):
     # time.sleep(0.5)  # run
     # take images
     responses = client.simGetImages([
-        # airsim.ImageRequest("0", airsim.ImageType.Velocity), # velocity buffer is erased at this point
+        # airsim.ImageRequest("0", airsim.ImageType.Scene), # this is replaced by screenshots. Only for preview.
+        # airsim.ImageRequest("0", airsim.ImageType.Velocity), # velocity buffer is captured earliel, as at this point it is erased because of client.simPause(True)
         airsim.ImageRequest("0", airsim.ImageType.SurfaceNormals),
         airsim.ImageRequest("0", airsim.ImageType.DepthPlanar, pixels_as_float = True, compress = False),
         airsim.ImageRequest("0", airsim.ImageType.Segmentation),
-        airsim.ImageRequest("0", airsim.ImageType.ShaderID), # probably very limited
+        airsim.ImageRequest("0", airsim.ImageType.ShaderID), # probably very limited @todo, decide do we want it
         # airsim.ImageRequest("0", airsim.ImageType.TextureUV), # not yet supported
-        airsim.ImageRequest("0", airsim.ImageType.SceneDepth, pixels_as_float = True, compress = False),
+        # airsim.ImageRequest("0", airsim.ImageType.SceneDepth, pixels_as_float = True, compress = False), # same as airsim DepthPlanar, but depthplannar is scaled to 0..1
         airsim.ImageRequest("0", airsim.ImageType.ReflectionVector),
         airsim.ImageRequest("0", airsim.ImageType.DotSurfaceReflection),
         airsim.ImageRequest("0", airsim.ImageType.Metallic),
@@ -178,8 +179,9 @@ for x in range(300):
         airsim.ImageRequest("0", airsim.ImageType.Roughness),
         #airsim.ImageRequest("0", airsim.ImageType.Anisotropy),
         #airsim.ImageRequest("0", airsim.ImageType.AO),
-        airsim.ImageRequest("0", airsim.ImageType.ShadingModelColor)])
+        airsim.ImageRequest("0", airsim.ImageType.ShadingModelColor)]) # probably very limited @todo, decide do we want it
 
+    # add velocity buffer captured earlier
     responses.extend(responses_velocity)
 
     for i, response in enumerate(responses):
@@ -188,8 +190,12 @@ for x in range(300):
         if response.pixels_as_float:
             print("Type %d, size %d, pos %s" % (
             response.image_type, len(response.image_data_float), pprint.pformat(response.camera_position)))
+            # for some reason it is flipped vertically. Reflip it.
+            image_arr = airsim.get_pfm_array(response)
+            print("shape is: ", image_arr.shape)
+            image_arr = np.flip(image_arr, axis=0)
             airsim.write_pfm(os.path.normpath(os.path.join(tmp_dir, str(i), str(x) + "_" + str(i) + '.pfm')),
-                             airsim.get_pfm_array(response))
+                             image_arr)
         else:
             print("Type %d, size %d, pos %s" % (
             response.image_type, len(response.image_data_uint8), pprint.pformat(response.camera_position)))

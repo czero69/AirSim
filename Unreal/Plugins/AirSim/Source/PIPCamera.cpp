@@ -497,7 +497,6 @@ void APIPCamera::updateCameraSetting(UCineCameraComponent* camera, const Capture
     if (camera->ProjectionMode == ECameraProjectionMode::Orthographic && !std::isnan(setting.ortho_width))
         camera->SetOrthoWidth(ned_transform.fromNed(setting.ortho_width));
 
-    capture->ShowFlags.SetTemporalAA(true);
     updateCameraPostProcessingSetting(camera->PostProcessSettings, setting);
 }
 

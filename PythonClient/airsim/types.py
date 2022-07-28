@@ -101,6 +101,32 @@ class ImageType(metaclass=_ImageType):
     AO = 22
     ShadingModelColor = 23
 
+
+StringToImageType = {"Scene" : ImageType.Scene,
+                     "DepthPlanar" : ImageType.DepthPlanar,
+                     "DepthPerspective" : ImageType.DepthPerspective,
+                     "DepthVis" : ImageType.DepthVis,
+                     "DisparityNormalized" : ImageType.DisparityNormalized,
+                     "Segmentation" : ImageType.Segmentation,
+                     "SurfaceNormals" : ImageType.SurfaceNormals,
+                     "Infrared" : ImageType.Infrared,
+                     "OpticalFlow" : ImageType.OpticalFlow,
+                     "OpticalFlowVis" : ImageType.OpticalFlowVis,
+                     "Velocity" : ImageType.Velocity,
+                     "ShaderID" : ImageType.ShaderID,
+                     "TextureUV" : ImageType.TextureUV,
+                     "SceneDepth" : ImageType.SceneDepth,
+                     "ReflectionVector" : ImageType.ReflectionVector,
+                     "DotSurfaceReflection" : ImageType.DotSurfaceReflection,
+                     "Metallic" : ImageType.Metallic,
+                     "Albedo" : ImageType.Albedo,
+                     "Specular" : ImageType.Specular,
+                     "Opacity" : ImageType.Opacity,
+                     "Roughness" : ImageType.Roughness,
+                     "Anisotropy" : ImageType.Anisotropy,
+                     "AO" : ImageType.AO,
+                     "ShadingModelColor" : ImageType.ShadingModelColor}
+
 class DrivetrainType:
     MaxDegreeOfFreedom = 0
     ForwardOnly = 1
