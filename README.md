@@ -1,3 +1,8 @@
+# Citysample with Airsim UE5
+
+This branch is work in progress and there is not yet here description how to use it.
+For now, please visit other branch: airsim-UE5.
+
 # Using AirSim in UE5
 
 This Branch shows how I managed to run and use the AirSim plugin in UE5. The code comments unsupported vehicle setups, which allows to compile AirSim for UE5 and use it in "ComputerVision" mode. Please note that other modes: {"Multirotor", "Car"} are not supported here and will not work properly when using this branch.
