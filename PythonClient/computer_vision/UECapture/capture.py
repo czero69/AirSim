@@ -307,21 +307,24 @@ class Capture:
                         #        response.image_type, len(response.image_data_float), pprint.pformat(response.camera_position)))
                         # for some reason it is flipped vertically. Reflip it.
                         image_arr = airsim.get_pfm_array(response)
-                        image_arr = np.flip(image_arr, axis=0)
+                        image_arr = np.flip(image_arr, axis=0) # need for depth buffer
                         airsim.write_pfm(os.path.normpath(os.path.join(save_dir, str(step_id).zfill(5) + '.pfm')),
                                          image_arr)
                     elif response.pixels_as_float_RGB:
                         # Change images into numpy arrays.
-                        print("Velocity buffer now!")
-                        img1d = np.array(response.image_data_float, dtype=np.float)
-                        print("shape: ", img1d.shape)
+                        img1d = np.array(response.image_data_float_RGB, dtype=np.float)
                         # img1d = np.frombuffer(response.image_data_uint8, dtype=np.uint8)
                         im = img1d.reshape(response.height, response.width, 3)
                         im_no_alpha = im[:, :, :3]
                         filename = os.path.normpath(os.path.join(save_dir, str(step_id).zfill(5) + '.npy'))
                         np.save(filename, im_no_alpha)
-                        # cv2.imwrite(os.path.normpath(os.path.join(save_dir, str(step_id).zfill(5) + '.npz')),
-                        #           im_no_alpha)
+
+                        # for visualization purposes:
+                        im_no_alpha = im_no_alpha*255
+                        im_no_alpha = np.clip(im_no_alpha, 0, 255)
+                        im_no_alpha = im_no_alpha.astype('uint8')
+                        cv2.imwrite(os.path.normpath(os.path.join(save_dir, str(step_id).zfill(5) + '_visualization.png')),
+                                   im_no_alpha)
                     else:
                         # if self.be_verbose:
                         #    print("Type %d, size %d, pos %s" % (
