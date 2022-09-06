@@ -320,15 +320,26 @@ class VehicleClient:
         response = self.client.call('simGetScreenshot', filepath)
         return response
 
-    # Takes Screenshot from main scene camera
+    # Sets UE Game speed
     def simSetGameSpeed(self, dilation):
         """
-        Take Screenshot
+        dilation: fraction of default speed. 1.0 == no change
 
         Returns:
             boolean response true if screenshot taken
         """
         response = self.client.call('simSetGameSpeed', dilation)
+        return response
+
+    # Sets UE Game speed
+    def simGetDeltaTime(self):
+        """
+        dilation: getting most recent delta time passed to UE tick()
+
+        Returns:
+            float delta time
+        """
+        response = self.client.call('simGetDeltaTime')
         return response
 
 

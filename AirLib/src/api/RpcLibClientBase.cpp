@@ -286,6 +286,13 @@ __pragma(warning(disable : 4239))
             return result;
         }
 
+        // get delta time
+        float RpcLibClientBase::simGetDeltaTime()
+        {
+            float result = pimpl_->client.call("simGetDeltaTime").as<float>();
+            return result;
+        }
+
         //CinemAirSim
         std::vector<std::string> RpcLibClientBase::simGetPresetLensSettings(const std::string& camera_name, const std::string& vehicle_name, bool external)
         {

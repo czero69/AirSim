@@ -148,9 +148,11 @@ class Capture:
 
         left, right = self.search_nearby_times(camera_time_lists, passed_simulation_time_usec)
 
-        print("left, right: ", left, right)
-        print("left_val, right_val: ", camera_patch[left][-1], camera_patch[right][-1])
-        print("target: ", passed_simulation_time_usec)
+        if self.be_verbose:
+            print('-- interpolate_position_and_rotation stats --')
+            print("left, right boundaries ids: ", left, right)
+            print("left, right boundaries vals: ", camera_patch[left][-1], camera_patch[right][-1])
+            print("target val: ", passed_simulation_time_usec)
 
         coords_prev = camera_patch[left]
         coords_next = camera_patch[right]
@@ -168,15 +170,17 @@ class Capture:
         else:
             raise NotImplemented
 
-        print("R1, R2", R1, R2)
-
         t1 = coords_prev[-1]
         t2 = coords_next[-1]
         t_out = passed_simulation_time_usec
 
+        if self.be_verbose:
+            print("R1, R2", R1, R2)
+            print("t1, t2, tout", t1, t2, t_out)
+
         position_val_prev = Vector3r(x_val=coords_prev[0], y_val=coords_prev[1], z_val=coords_prev[2])
         position_val_next = Vector3r(x_val=coords_next[0], y_val=coords_next[1], z_val=coords_next[2])
-        position_interpolated = (position_val_prev + position_val_next) / 2
+        # position_interpolated = (position_val_prev + position_val_next) / 2
 
         if(t2 - t1 != 0):
             qi = quaternion.slerp(R1, R2, t1, t2, t_out)
@@ -189,6 +193,10 @@ class Capture:
             # avoid zero division
             quaternion_interpolated = Quaternionr(x_val=R1.x, y_val=R1.y, z_val=R1.z, w_val=R1.w)
             position_interpolated = Vector3r(x_val=coords_prev[0], y_val=coords_prev[1], z_val=coords_prev[2])
+
+        if self.be_verbose:
+            print("quaternion_interpolated: ", quaternion_interpolated)
+            print("position_interpolated: ", position_interpolated)
 
         return position_interpolated, quaternion_interpolated
 
@@ -208,6 +216,17 @@ class Capture:
 
         return ned_pos, ned_quat
 
+    def get_pose_from_camera_path(self, elapsed_simulation_time_msec, camera_path, camera_pathes, camera_time_list):
+        position_val, orientation_val = self.interpolate_position_and_rotation(elapsed_simulation_time_msec,
+                                                                               camera_path,
+                                                                               camera_pathes[
+                                                                                   'rotation_notation'],
+                                                                               camera_time_list)
+        position_val, orientation_val = self.toNED(position_val, orientation_val)
+        position_val.z_val = position_val.z_val + 5.0  # @todo shift initial pos, orientat; add init pose support
+        pose = Pose(position_val=position_val, orientation_val=orientation_val)
+        return pose
+
     def record(self, camera_pathes=None, time_dilation=0.01, target_fps=60):
         '''
         performs camera recording
@@ -224,7 +243,7 @@ class Capture:
                     1 / time_dilation)  # how much time has to pass in slowed down game engine to hit desired fps
         # (in seconds)
         target_simulation_time_step_usec = target_simulation_time_step * 1000000  # as above, but in micro seconds (10^-6)
-        real_time_step_usec = (1 / target_fps) * 1000000 # how much time is passing in real time (in micro seconds)
+        targeted_time_step_usec = (1 / target_fps) * 1000000 # how much time is passing in real time (in micro seconds)
 
         self.client.simSetGameSpeed(time_dilation)  # dont call simSetGameSpeed often and with zero values,
         # I have observed it can break wheels in UE5 CitySample demo
@@ -238,6 +257,7 @@ class Capture:
             camera_pathes = self.read_camera_paths_from_disk()
 
         # @todo add camera_patches supprot - for now, simple demo
+
         for path_name, camera_path in camera_pathes['patches'].items():
             # self.client.simPause(False)  # after moving to new location, rebuild Lumen and others for a longer time
             # time.sleep(7.0)
@@ -246,28 +266,34 @@ class Capture:
             for step_id, coords in enumerate(camera_path):
                 elapsed_camera_paths_time_msec = coords[-1]
                 camera_time_list.append(elapsed_camera_paths_time_msec)
-            total_steps = camera_time_list[-1] // real_time_step_usec
+            total_steps = camera_time_list[-1] // targeted_time_step_usec
             for step_id in tqdm(range(int(total_steps))):
-                elapsed_simulation_time_msec = int(real_time_step_usec * step_id)
-                position_val, orientation_val = self.interpolate_position_and_rotation(elapsed_simulation_time_msec,
-                                                                                       camera_path,
-                                                                                       camera_pathes[
-                                                                                           'rotation_notation'],
-                                                                                       camera_time_list)
-                position_val, orientation_val = self.toNED(position_val, orientation_val)
-                position_val.z_val = position_val.z_val + 5.0  # @todo shift initial pos, orientat
-                pose = Pose(position_val=position_val, orientation_val=orientation_val)
+                elapsed_simulation_time_usec_now = int(targeted_time_step_usec * step_id)
+                last_delta_usecs = self.client.simGetDeltaTime() * (1/time_dilation) * 1000000
+                elapsed_simulation_time_usec_prev_step = int(elapsed_simulation_time_usec_now - \
+                                                          1.0 * last_delta_usecs * time_dilation) # time_dilation
+                if self.be_verbose:
+                    print("last_delta_usecs: ", last_delta_usecs)
+                    print("elapsed time now/prev:", elapsed_simulation_time_usec_now, elapsed_simulation_time_usec_prev_step)
+                pose_now = self.get_pose_from_camera_path(elapsed_simulation_time_usec_now, camera_path, camera_pathes,
+                                               camera_time_list)
+                # so the jump from pose_prev to pose_now takes into consideration how much did we slowed things down
+                # by 'time_dilation'
+                pose_prev = self.get_pose_from_camera_path(elapsed_simulation_time_usec_prev_step, camera_path, camera_pathes,
+                                               camera_time_list)
                 if self.be_verbose:
                     self.getPoseAndRotation()
                 self.client.simPause(False)
+                self.client.simSetVehiclePose(pose_prev, True)
                 time.sleep(target_simulation_time_step)  # iterate simulation
                 # self.client.simSetVehiclePose(pose, True)
-                self.client.simSetVehiclePose(pose, True)
+
+                self.client.simSetVehiclePose(pose_now, True)
 
                 # get velocity buffers before calling simPause. SimPause will erase velocity buffer.
                 responses_velocity = self.client.simGetImages([
-                    airsim.ImageRequest("0", airsim.ImageType.Velocity, pixels_as_float = False, pixels_as_float_RGB = True, compress = False)])
-
+                    airsim.ImageRequest("0", airsim.ImageType.Velocity, pixels_as_float=False, pixels_as_float_RGB=True,
+                                        compress=False)])
                 self.client.simPause(True)
                 time.sleep(0.1)  # @todo, does it help here (?)
                 if self.be_verbose:
@@ -295,6 +321,7 @@ class Capture:
                     airsim.ImageRequest("0", airsim.ImageType.ShadingModelColor, pixels_as_float = False, compress = False)])  # probably very limited @todo, decide do we want it
 
                 # add velocity buffer captured earlier
+
                 responses.extend(responses_velocity)
 
                 for response in responses:
@@ -311,15 +338,41 @@ class Capture:
                         airsim.write_pfm(os.path.normpath(os.path.join(save_dir, str(step_id).zfill(5) + '.pfm')),
                                          image_arr)
                     elif response.pixels_as_float_RGB:
+                        # so far this data type is only used for velocity buffer
                         # Change images into numpy arrays.
                         img1d = np.array(response.image_data_float_RGB, dtype=np.float)
                         # img1d = np.frombuffer(response.image_data_uint8, dtype=np.uint8)
                         im = img1d.reshape(response.height, response.width, 3)
                         im_no_alpha = im[:, :, :3]
+                        # standarize to selected fps number instead of what fps game engine is rendering
+                        # current velocity buffer matches last_delta_usecs (what fps ue has rendered)
+                        # we are targeting targeted_time_step_usec (1 / target_fps) * 10^6
+                        # im_no_alpha --> last_delta_usecs
+
+                        print("DIVIDOR: ", (targeted_time_step_usec / last_delta_usecs))
+
+
+                        im_no_alpha -= 0.5
+                        im_no_alpha /= 0.5
+                        im_no_alpha = im_no_alpha * (targeted_time_step_usec / last_delta_usecs)
+                        im_no_alpha *= 20 # empower signal so it looks good in RGB range
+                        im_no_alpha *= 0.5
+                        im_no_alpha += 0.5
+
+
                         filename = os.path.normpath(os.path.join(save_dir, str(step_id).zfill(5) + '.npy'))
                         np.save(filename, im_no_alpha)
 
+                        # velocity needs to support -2..2 screen space range for x and y
                         # for visualization purposes:
+                        '''
+                        im_no_alpha -= 0.5
+                        im_no_alpha /= 0.5
+                        im_no_alpha *= 1.0
+                        im_no_alpha *= 0.5
+                        im_no_alpha += 0.5
+                        '''
+
                         im_no_alpha = im_no_alpha*255
                         im_no_alpha = np.clip(im_no_alpha, 0, 255)
                         im_no_alpha = im_no_alpha.astype('uint8')

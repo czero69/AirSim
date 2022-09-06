@@ -108,6 +108,8 @@ namespace airlib
         virtual bool getScreenshot(const std::string& file_path) const = 0;
         // set game speed
         virtual float setGameSpeed(float dilation) const = 0;
+        // set game speed
+        virtual float getDeltaTime() const = 0;
 
         //CinemAirSim
         virtual std::vector<std::string> getPresetLensSettings(const CameraDetails& camera_details) = 0;

@@ -117,8 +117,11 @@ namespace airlib
         //Screenshot
         bool simGetScreenshot(const std::string& file_path);
 
-        //Screenshot
+        // Set Game Speed
         float simSetGameSpeed(float dilation);
+
+        // Get Delta Time
+        float simGetDeltaTime();
 
         //CinemAirSim
         std::vector<std::string> simGetPresetLensSettings(const std::string& camera_name, const std::string& vehicle_name = "", bool external = false);

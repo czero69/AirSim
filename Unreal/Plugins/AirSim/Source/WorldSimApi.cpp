@@ -978,6 +978,11 @@ float WorldSimApi::setGameSpeed(float dilation) const
     return dilation;
 }
 
+float WorldSimApi::getDeltaTime() const
+{
+    return simmode_->GetWorld()->GetDeltaSeconds();
+}
+
 //CinemAirSim
 std::vector<std::string> WorldSimApi::getPresetLensSettings(const CameraDetails& camera_details)
 {

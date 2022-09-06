@@ -99,6 +99,8 @@ public:
     virtual bool getScreenshot(const std::string& file_path) const override;
     // set game speed
     virtual float setGameSpeed(float dilation) const override;
+    // get delta time
+    virtual float getDeltaTime() const override;
 
     //CinemAirSim
     virtual std::vector<std::string> getPresetLensSettings(const CameraDetails& camera_details) override;

@@ -159,8 +159,13 @@ namespace airlib
             });
 
         // set game speed
-        pimpl_->server.bind("simSetGameSpeed", [&](float dilation) -> bool {
+        pimpl_->server.bind("simSetGameSpeed", [&](float dilation) -> float {
             return getWorldSimApi()->setGameSpeed(dilation);
+        });
+
+        // get delta time
+        pimpl_->server.bind("simGetDeltaTime", [&]() -> float {
+            return getWorldSimApi()->getDeltaTime();
         });
 
         //CinemAirSim
