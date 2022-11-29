@@ -11,6 +11,7 @@ from typing import List
 import math
 from tqdm import tqdm
 import cv2
+from threading import Thread
 
 
 class Capture:
@@ -18,7 +19,8 @@ class Capture:
         # create airsim client and establish a connection
         self.client = airsim.MultirotorClient()
         self.client.confirmConnection()
-        self.tmp_dir = os.path.join(tempfile.gettempdir(), "airsim_drone")
+        # self.tmp_dir = os.path.join(tempfile.gettempdir(), "airsim_drone")
+        self.tmp_dir = 'D:/Kamil/data_collected/airsim_drone/'
         self.be_verbose = verbose
         self.save_dir = save_dir
         self.camera_paths_dir = camera_paths
@@ -227,6 +229,38 @@ class Capture:
         pose = Pose(position_val=position_val, orientation_val=orientation_val)
         return pose
 
+    def move_camera(self, move_by_time_usec, elapsed_prev_simulation_time_usec, time_dilation, camera_path,
+                    camera_pathes, camera_time_list, sampling_rate=1.0):
+        '''
+        moving camera by specified amount of time
+        Args:
+            move_by_time_usec:
+            elapsed_prev_simulation_time_usec: time that has passed previously
+            sampling_rate: how often do you want to 'jump' the camera around per real render time (fps in ue5).
+
+        Returns:
+
+        '''
+
+        total_time_passed_usec = 0
+        cunt = 0
+        recent_u5_delta_us = self.client.simGetDeltaTime() * 1000000
+        current_delta_us = recent_u5_delta_us / sampling_rate
+        while(total_time_passed_usec < move_by_time_usec - current_delta_us):
+            cunt += 1
+            recent_u5_delta_us = self.client.simGetDeltaTime() * 1000000 # * (1 / time_dilation) # (1 / time_dilation)
+            # recent_u5_delta_us_simulation = recent_u5_delta_us * (1 / time_dilation)
+            current_delta_us = recent_u5_delta_us / sampling_rate
+            total_time_passed_usec += current_delta_us
+            elapsed_simulation_time_usec_now = elapsed_prev_simulation_time_usec + total_time_passed_usec
+            if self.be_verbose:
+                print("current_delta_us: ", current_delta_us)
+                print("elapsed_simulation_time_usec_now:", elapsed_simulation_time_usec_now)
+            pose_now = self.get_pose_from_camera_path(elapsed_simulation_time_usec_now, camera_path, camera_pathes,
+                                                      camera_time_list)
+            time.sleep(current_delta_us / 1000000)  # iterate simulation
+            self.client.simSetVehiclePose(pose_now, True)
+
     def record(self, camera_pathes=None, time_dilation=0.01, target_fps=60):
         '''
         performs camera recording
@@ -267,14 +301,23 @@ class Capture:
                 elapsed_camera_paths_time_msec = coords[-1]
                 camera_time_list.append(elapsed_camera_paths_time_msec)
             total_steps = camera_time_list[-1] // targeted_time_step_usec
+            ### estimated_safe_sleep_time = 2  # in secs # @todo SafeSleepTime
             for step_id in tqdm(range(int(total_steps))):
+                # create a thread
                 elapsed_simulation_time_usec_now = int(targeted_time_step_usec * step_id)
+                #thread = Thread(target=self.move_camera, args=(targeted_time_step_usec,
+                #                                               int(targeted_time_step_usec * (step_id - 1)), time_dilation
+                #                                               , camera_path, camera_pathes, camera_time_list))
                 last_delta_usecs = self.client.simGetDeltaTime() * (1/time_dilation) * 1000000
                 elapsed_simulation_time_usec_prev_step = int(elapsed_simulation_time_usec_now - \
-                                                          1.0 * last_delta_usecs * time_dilation) # time_dilation
-                if self.be_verbose:
-                    print("last_delta_usecs: ", last_delta_usecs)
-                    print("elapsed time now/prev:", elapsed_simulation_time_usec_now, elapsed_simulation_time_usec_prev_step)
+                                                             32 * (np.sqrt(last_delta_usecs * time_dilation)))  # time_dilation
+                #elapsed_simulation_time_usec_prev_step = int(elapsed_simulation_time_usec_now - \
+                  #                                        1.0 * last_delta_usecs * time_dilation) # time_dilation
+                #elapsed_simulation_time_usec_prev_step = int(elapsed_simulation_time_usec_now - \
+                  #                                        1.0 * targeted_time_step_usec) # time_dilation
+                #if self.be_verbose:
+                #    print("last_delta_usecs: ", last_delta_usecs)
+                #    print("elapsed time now/prev:", elapsed_simulation_time_usec_now, elapsed_simulation_time_usec_prev_step)
                 pose_now = self.get_pose_from_camera_path(elapsed_simulation_time_usec_now, camera_path, camera_pathes,
                                                camera_time_list)
                 # so the jump from pose_prev to pose_now takes into consideration how much did we slowed things down
@@ -283,25 +326,73 @@ class Capture:
                                                camera_time_list)
                 if self.be_verbose:
                     self.getPoseAndRotation()
+
+                # self.client.simSetGameSpeed(time_dilation) # @todo TEST NEW
+                ### time.sleep(1)  # @todo TEST NEW
+                time_before_pause = time.time()
                 self.client.simPause(False)
-                self.client.simSetVehiclePose(pose_prev, True)
-                time.sleep(target_simulation_time_step)  # iterate simulation
-                # self.client.simSetVehiclePose(pose, True)
-
+                ### self.client.simSetVehiclePose(pose_prev, True) # pose_prev # @todo TEST NEW
                 self.client.simSetVehiclePose(pose_now, True)
-
+                ## thread.start()
+                time.sleep(target_simulation_time_step)  # @todo TEST NEW iterate simulation
+                ###if (estimated_safe_sleep_time > 0):
+                ###    time.sleep(estimated_safe_sleep_time) # sleep some amount of time,
+                                                              # so the light rebuilds after camera movement, but less than
+                                                              # target_simulation_time_step, so in case now elapsed time is shorter,
+                                                              # we still have some time left
+                ## thread.join()
+                ### self.client.simSetVehiclePose(pose_now, True) # @todo TEST NEW
                 # get velocity buffers before calling simPause. SimPause will erase velocity buffer.
+                '''
                 responses_velocity = self.client.simGetImages([
                     airsim.ImageRequest("0", airsim.ImageType.Velocity, pixels_as_float=False, pixels_as_float_RGB=True,
-                                        compress=False)])
-                self.client.simPause(True)
-                time.sleep(0.1)  # @todo, does it help here (?)
+                                        compress=False)]) # @todo CHECK
+                end = time.time()
+                print("time responses_velocity ms:", (end - start) * 1000)
+                '''
+                #self.client.simSetGameSpeed(0.0) # @todo TEST NEW
+                ### time.sleep(1.5) # @todo TEST NEW
+                self.client.simPause(True) # @todo NO PAUSE? NEW
+                # time.sleep(2)  # @todo, does it help here (?)
+
+                '''
+                save_screenshot_dir = os.path.join(self.tmp_dir, path_name, "screenshot")
+                if not os.path.exists(save_screenshot_dir):
+                    os.makedirs(save_screenshot_dir)
+                # print(os.path.join(save_screenshot_dir.replace(os.sep, '/'), str(step_id).zfill(5) + '.png'))
+                success = self.client.simTakeScreenshot(
+                    os.path.join(save_screenshot_dir.replace(os.sep, '/'), str(step_id).zfill(5) + '.png'))
+                if self.be_verbose:
+                    print("image taken")
                 if self.be_verbose:
                     print("taking images")
+                '''
+
+                #responses_velocity = self.client.simGetImages([
+                #    airsim.ImageRequest("0", airsim.ImageType.Velocity, pixels_as_float=False, pixels_as_float_RGB=True,
+                #                        compress=False)])  # @todo CHECK
+
+                '''
+                time_after_pause = time.time()
+                last_sleep_time_sec = time_after_pause - time_before_pause
+                remaining_sleep_time_sec = target_simulation_time_step - last_sleep_time_sec
+                estimated_safe_sleep_time = (remaining_sleep_time_sec + estimated_safe_sleep_time)*0.8
+                if(remaining_sleep_time_sec > 0):
+                    time.sleep(remaining_sleep_time_sec)
+                else:
+                    print("taking buffers takes longer time needed to run demo for desired FPS. "
+                          "Consider slowing the UE5 game speed even further. "
+                          "Please set time_dilation parameter for smaller value.")
+                    print("time target_simulation_time_step True ms:", (target_simulation_time_step) * 1000)
+                    print("time last_sleep_time_sec ms:", (last_sleep_time_sec) * 1000)
+                    print("time remaining_sleep_time_sec True ms:", (remaining_sleep_time_sec) * 1000)
+                    print("time estimated_safe_sleep_time True ms:", (estimated_safe_sleep_time) * 1000)
+                self.client.simPause(True)
+                '''
 
                 responses = self.client.simGetImages([
                     ### airsim.ImageRequest("0", airsim.ImageType.Scene), # this is replaced by screenshots. Only for preview.
-                    ### airsim.ImageRequest("0", airsim.ImageType.Velocity), # velocity buffer is captured earliel, as at this point it is erased because of client.simPause(True)
+                    airsim.ImageRequest("0", airsim.ImageType.Velocity, pixels_as_float=False, pixels_as_float_RGB=True, compress=False), # velocity buffer is captured earliel, as at this point it is erased because of client.simPause(True) @todo TEST NEW
                     airsim.ImageRequest("0", airsim.ImageType.SurfaceNormals, pixels_as_float = False, compress = False),
                     airsim.ImageRequest("0", airsim.ImageType.DepthPlanar, pixels_as_float=True, compress=False),
                     airsim.ImageRequest("0", airsim.ImageType.Segmentation, pixels_as_float = False, compress = False),
@@ -321,8 +412,20 @@ class Capture:
                     airsim.ImageRequest("0", airsim.ImageType.ShadingModelColor, pixels_as_float = False, compress = False)])  # probably very limited @todo, decide do we want it
 
                 # add velocity buffer captured earlier
+                self.client.simPause(True)
 
-                responses.extend(responses_velocity)
+                save_screenshot_dir = os.path.join(self.tmp_dir, path_name, "screenshot")
+                if not os.path.exists(save_screenshot_dir):
+                    os.makedirs(save_screenshot_dir)
+                # print(os.path.join(save_screenshot_dir.replace(os.sep, '/'), str(step_id).zfill(5) + '.png'))
+                success = self.client.simTakeScreenshot(
+                    os.path.join(save_screenshot_dir.replace(os.sep, '/'), str(step_id).zfill(5) + '.png'))
+                if self.be_verbose:
+                    print("image taken")
+                if self.be_verbose:
+                    print("taking images")
+
+                ### responses.extend(responses_velocity) # @todo TEST NEW
 
                 for response in responses:
                     save_dir = os.path.join(self.tmp_dir, path_name, str(response.image_type))
@@ -349,19 +452,19 @@ class Capture:
                         # we are targeting targeted_time_step_usec (1 / target_fps) * 10^6
                         # im_no_alpha --> last_delta_usecs
 
-                        print("DIVIDOR: ", (targeted_time_step_usec / last_delta_usecs))
-
-
                         im_no_alpha -= 0.5
                         im_no_alpha /= 0.5
-                        im_no_alpha = im_no_alpha * (targeted_time_step_usec / last_delta_usecs)
-                        im_no_alpha *= 20 # empower signal so it looks good in RGB range
+                        im_no_alpha = im_no_alpha * np.sqrt(targeted_time_step_usec / (last_delta_usecs * time_dilation)) # # @todo time_dilation added / not certain is it correct
+                        # im_no_alpha *= 3 # time_dilation=0.00167 intead of 0.01 @todo remove this calc from UE shader
+                        # im_no_alpha = im_no_alpha * (last_delta_usecs * time_dilation / (targeted_time_step_usec))
+                        # im_no_alpha *= 1.0 # 20 # empower signal so it looks good in RGB range
                         im_no_alpha *= 0.5
                         im_no_alpha += 0.5
 
 
+
                         filename = os.path.normpath(os.path.join(save_dir, str(step_id).zfill(5) + '.npy'))
-                        np.save(filename, im_no_alpha)
+                        ##### np.save(filename, im_no_alpha) #@todo unlock it later with switch
 
                         # velocity needs to support -2..2 screen space range for x and y
                         # for visualization purposes:
@@ -395,7 +498,7 @@ class Capture:
                         im_no_alpha = im[:,:,:3]
                         cv2.imwrite(os.path.normpath(os.path.join(save_dir, str(step_id).zfill(5) + '.png')), im_no_alpha)
 
-
+                '''
                 save_screenshot_dir = os.path.join(self.tmp_dir, path_name, "screenshot")
                 if not os.path.exists(save_screenshot_dir):
                     os.makedirs(save_screenshot_dir)
@@ -404,5 +507,7 @@ class Capture:
                     os.path.join(save_screenshot_dir.replace(os.sep, '/'), str(step_id).zfill(5) + '.png'))
                 if self.be_verbose:
                     print("image taken")
+                '''
+
 
         self.client.simPause(False)  # leave demo unpaused

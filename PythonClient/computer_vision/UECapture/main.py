@@ -59,11 +59,5 @@ if __name__ == "__main__":
         const=True,
         help="print more info",
     )
-    parser.add_argument(
-        "--page_count",
-        type=int,
-        help="int example",
-        default=4,
-    )
     args = vars(parser.parse_args())
     main(args)
