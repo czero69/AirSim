@@ -226,6 +226,9 @@ void ASimModeBase::initializeTimeOfDay()
         static const FName sun_prop_name(TEXT("Directional light actor"));
         auto* p = sky_sphere_class_->FindPropertyByName(sun_prop_name);
 
+        // @TODO why the heck they even need some sun (?)
+
+        /*
 #if ENGINE_MINOR_VERSION > 24
         FObjectProperty* sun_prop = CastFieldChecked<FObjectProperty>(p);
 #else
@@ -236,6 +239,7 @@ void ASimModeBase::initializeTimeOfDay()
         sun_ = Cast<ADirectionalLight>(sun_obj);
         if (sun_)
             default_sun_rotation_ = sun_->GetActorRotation();
+        */
     }
 }
 

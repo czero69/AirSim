@@ -111,27 +111,28 @@ std::string ASimModeCar::getVehiclePawnPathName(const AirSimSettings::VehicleSet
 
 PawnEvents* ASimModeCar::getVehiclePawnEvents(APawn* pawn) const
 {
-    return static_cast<TVehiclePawn*>(pawn)->getPawnEvents();
+    return nullptr; //static_cast<TVehiclePawn*>(pawn)->getPawnEvents();
 }
 const common_utils::UniqueValueMap<std::string, APIPCamera*> ASimModeCar::getVehiclePawnCameras(
     APawn* pawn) const
 {
-    return (static_cast<const TVehiclePawn*>(pawn))->getCameras();
+    return common_utils::UniqueValueMap<std::string, APIPCamera*>();
+    //return (static_cast<const TVehiclePawn*>(pawn))->getCameras();
 }
 void ASimModeCar::initializeVehiclePawn(APawn* pawn)
 {
-    auto vehicle_pawn = static_cast<TVehiclePawn*>(pawn);
-    vehicle_pawn->initializeForBeginPlay(getSettings().engine_sound);
+    //auto vehicle_pawn = static_cast<TVehiclePawn*>(pawn);
+    //vehicle_pawn->initializeForBeginPlay(getSettings().engine_sound);
 }
 std::unique_ptr<PawnSimApi> ASimModeCar::createVehicleSimApi(
     const PawnSimApi::Params& pawn_sim_api_params) const
 {
-    auto vehicle_pawn = static_cast<TVehiclePawn*>(pawn_sim_api_params.pawn);
-    auto vehicle_sim_api = std::unique_ptr<PawnSimApi>(new CarPawnSimApi(pawn_sim_api_params,
-                                                                         vehicle_pawn->getKeyBoardControls()));
-    vehicle_sim_api->initialize();
-    vehicle_sim_api->reset();
-    return vehicle_sim_api;
+    //auto vehicle_pawn = static_cast<TVehiclePawn*>(pawn_sim_api_params.pawn);
+    //auto vehicle_sim_api = std::unique_ptr<PawnSimApi>(new CarPawnSimApi(pawn_sim_api_params,
+    //                                                                     vehicle_pawn->getKeyBoardControls()));
+    //vehicle_sim_api->initialize();
+    //vehicle_sim_api->reset();
+    return nullptr; // vehicle_sim_api;
 }
 msr::airlib::VehicleApiBase* ASimModeCar::getVehicleApi(const PawnSimApi::Params& pawn_sim_api_params,
                                                         const PawnSimApi* sim_api) const

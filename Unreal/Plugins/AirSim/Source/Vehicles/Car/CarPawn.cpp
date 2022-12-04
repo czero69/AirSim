@@ -4,7 +4,6 @@
 #include "Components/TextRenderComponent.h"
 #include "Components/AudioComponent.h"
 #include "Sound/SoundCue.h"
-#include "WheeledVehicleMovementComponent4W.h"
 
 #include "CarWheelFront.h"
 #include "CarWheelRear.h"
@@ -39,19 +38,19 @@ ACarPawn::ACarPawn()
     // Create In-Car camera component
     camera_front_center_base_ = CreateDefaultSubobject<USceneComponent>(TEXT("camera_front_center_base_"));
     camera_front_center_base_->SetRelativeLocation(FVector(200, 0, 100)); //center
-    camera_front_center_base_->SetupAttachment(GetMesh());
+    //camera_front_center_base_->SetupAttachment(GetMesh());
     camera_front_left_base_ = CreateDefaultSubobject<USceneComponent>(TEXT("camera_front_left_base_"));
     camera_front_left_base_->SetRelativeLocation(FVector(200, -12.5, 100)); //left
-    camera_front_left_base_->SetupAttachment(GetMesh());
+    //camera_front_left_base_->SetupAttachment(GetMesh());
     camera_front_right_base_ = CreateDefaultSubobject<USceneComponent>(TEXT("camera_front_right_base_"));
     camera_front_right_base_->SetRelativeLocation(FVector(200, 12.5, 100)); //right
-    camera_front_right_base_->SetupAttachment(GetMesh());
+    //camera_front_right_base_->SetupAttachment(GetMesh());
     camera_driver_base_ = CreateDefaultSubobject<USceneComponent>(TEXT("camera_driver_base_"));
     camera_driver_base_->SetRelativeLocation(FVector(0, -25, 125)); //driver
-    camera_driver_base_->SetupAttachment(GetMesh());
+    //camera_driver_base_->SetupAttachment(GetMesh());
     camera_back_center_base_ = CreateDefaultSubobject<USceneComponent>(TEXT("camera_back_center_base_"));
     camera_back_center_base_->SetRelativeLocation(FVector(-200, 0, 100)); //rear
-    camera_back_center_base_->SetupAttachment(GetMesh());
+    //camera_back_center_base_->SetupAttachment(GetMesh());
 
     // In car HUD
     // Create text render component for in car speed display
@@ -59,7 +58,7 @@ ACarPawn::ACarPawn()
     speed_text_render_->SetRelativeScale3D(FVector(0.1f, 0.1f, 0.1f));
     speed_text_render_->SetRelativeLocation(FVector(35.0f, -6.0f, 20.0f));
     speed_text_render_->SetRelativeRotation(FRotator(0.0f, 180.0f, 0.0f));
-    speed_text_render_->SetupAttachment(GetMesh());
+    //speed_text_render_->SetupAttachment(GetMesh());
     speed_text_render_->SetVisibility(true);
 
     // Create text render component for in car gear display
@@ -67,14 +66,14 @@ ACarPawn::ACarPawn()
     gear_text_render_->SetRelativeScale3D(FVector(0.1f, 0.1f, 0.1f));
     gear_text_render_->SetRelativeLocation(FVector(35.0f, 5.0f, 20.0f));
     gear_text_render_->SetRelativeRotation(FRotator(0.0f, 180.0f, 0.0f));
-    gear_text_render_->SetupAttachment(GetMesh());
+    //gear_text_render_->SetupAttachment(GetMesh());
     gear_text_render_->SetVisibility(true);
 
     // Setup the audio component and allocate it a sound cue
     ConstructorHelpers::FObjectFinder<USoundCue> SoundCue(TEXT("/AirSim/VehicleAdv/Sound/Engine_Loop_Cue.Engine_Loop_Cue"));
     engine_sound_audio_ = CreateDefaultSubobject<UAudioComponent>(TEXT("EngineSound"));
     engine_sound_audio_->SetSound(SoundCue.Object);
-    engine_sound_audio_->SetupAttachment(GetMesh());
+    //engine_sound_audio_->SetupAttachment(GetMesh());
 
     // Colors for the in-car gear display. One for normal one for reverse
     last_gear_display_reverse_color_ = FColor(255, 0, 0, 255);
@@ -85,7 +84,7 @@ ACarPawn::ACarPawn()
 
 void ACarPawn::setupVehicleMovementComponent()
 {
-    UWheeledVehicleMovementComponent4W* movement = CastChecked<UWheeledVehicleMovementComponent4W>(getVehicleMovementComponent());
+    //UWheeledVehicleMovementComponent4W* movement = CastChecked<UWheeledVehicleMovementComponent4W>(getVehicleMovementComponent());
     /*
     check(movement->WheelSetups.Num() == 4);
 
@@ -162,10 +161,10 @@ void ACarPawn::NotifyHit(class UPrimitiveComponent* MyComp, class AActor* Other,
     pawn_events_.getCollisionSignal().emit(MyComp, Other, OtherComp, bSelfMoved, HitLocation, HitNormal, NormalImpulse, Hit);
 }
 
-UWheeledVehicleMovementComponent* ACarPawn::getVehicleMovementComponent() const
+/*UWheeledVehicleMovementComponent* ACarPawn::getVehicleMovementComponent() const
 {
-    return GetVehicleMovement();
-}
+    return NULL;
+}*/
 
 void ACarPawn::initializeForBeginPlay(bool engine_sound)
 {
@@ -253,8 +252,8 @@ void ACarPawn::Tick(float Delta)
     updateInCarHUD();
 
     // Pass the engine RPM to the sound component
-    float RPMToAudioScale = 2500.0f / GetVehicleMovement()->GetEngineMaxRotationSpeed();
-    engine_sound_audio_->SetFloatParameter(FName("RPM"), GetVehicleMovement()->GetEngineRotationSpeed() * RPMToAudioScale);
+    //float RPMToAudioScale = 2500.0f / GetVehicleMovement()->GetEngineMaxRotationSpeed();
+    //engine_sound_audio_->SetFloatParameter(FName("RPM"), GetVehicleMovement()->GetEngineRotationSpeed() * RPMToAudioScale);
 
     pawn_events_.getPawnTickSignal().emit(Delta);
 }
@@ -272,39 +271,39 @@ void ACarPawn::updateHUDStrings()
 
     float speed_unit_factor = AirSimSettings::singleton().speed_unit_factor;
     FText speed_unit_label = FText::FromString(FString(AirSimSettings::singleton().speed_unit_label.c_str()));
-    float vel = FMath::Abs(GetVehicleMovement()->GetForwardSpeed() / 100); //cm/s -> m/s
+    float vel = 0; //FMath::Abs(GetVehicleMovement()->GetForwardSpeed() / 100); //cm/s -> m/s
     float vel_rounded = FMath::FloorToInt(vel * 10 * speed_unit_factor) / 10.0f;
-    int32 Gear = GetVehicleMovement()->GetCurrentGear();
+    int32 Gear = 0; //GetVehicleMovement()->GetCurrentGear();
 
     // Using FText because this is display text that should be localizable
     last_speed_ = FText::Format(LOCTEXT("SpeedFormat", "{0} {1}"), FText::AsNumber(vel_rounded), speed_unit_label);
 
-    if (GetVehicleMovement()->GetCurrentGear() < 0) {
+    /*if (GetVehicleMovement()->GetCurrentGear() < 0) {
         last_gear_ = FText(LOCTEXT("ReverseGear", "R"));
     }
     else {
         last_gear_ = (Gear == 0) ? LOCTEXT("N", "N") : FText::AsNumber(Gear);
-    }
+    }*/
 
     UAirBlueprintLib::LogMessage(TEXT("Speed: "), last_speed_.ToString(), LogDebugLevel::Informational);
     UAirBlueprintLib::LogMessage(TEXT("Gear: "), last_gear_.ToString(), LogDebugLevel::Informational);
-    UAirBlueprintLib::LogMessage(TEXT("RPM: "), FText::AsNumber(GetVehicleMovement()->GetEngineRotationSpeed()).ToString(), LogDebugLevel::Informational);
+    //UAirBlueprintLib::LogMessage(TEXT("RPM: "), FText::AsNumber(GetVehicleMovement()->GetEngineRotationSpeed()).ToString(), LogDebugLevel::Informational);
 }
 
 void ACarPawn::updateInCarHUD()
 {
-    APlayerController* PlayerController = Cast<APlayerController>(GetController());
+    APlayerController* PlayerController = nullptr; //Cast<APlayerController>(GetController());
     if ((PlayerController != nullptr) && (speed_text_render_ != nullptr) && (gear_text_render_ != nullptr)) {
         // Setup the text render component strings
         speed_text_render_->SetText(last_speed_);
         gear_text_render_->SetText(last_gear_);
 
-        if (GetVehicleMovement()->GetCurrentGear() >= 0) {
+        /*if (GetVehicleMovement()->GetCurrentGear() >= 0) {
             gear_text_render_->SetTextRenderColor(last_gear_display_color_);
         }
         else {
             gear_text_render_->SetTextRenderColor(last_gear_display_reverse_color_);
-        }
+        }*/
     }
 }
 
@@ -312,11 +311,11 @@ void ACarPawn::updatePhysicsMaterial()
 {
     if (GetActorUpVector().Z < 0) {
         if (is_low_friction_ == true) {
-            GetMesh()->SetPhysMaterialOverride(non_slippery_mat_);
+            //GetMesh()->SetPhysMaterialOverride(non_slippery_mat_);
             is_low_friction_ = false;
         }
         else {
-            GetMesh()->SetPhysMaterialOverride(slippery_mat_);
+            //GetMesh()->SetPhysMaterialOverride(slippery_mat_);
             is_low_friction_ = true;
         }
     }

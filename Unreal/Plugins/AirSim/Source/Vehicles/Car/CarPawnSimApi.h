@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "WheeledVehicleMovementComponent4W.h"
+//#include "WheeledVehicleMovementComponent4W.h"
 
 #include "CarPawn.h"
 #include "CarPawnApi.h"
@@ -56,7 +56,7 @@ private:
 
 private:
     std::unique_ptr<msr::airlib::CarApiBase> vehicle_api_;
-    std::unique_ptr<CarPawnApi> pawn_api_;
+    //std::unique_ptr<CarPawnApi> pawn_api_;
     std::vector<std::string> vehicle_api_messages_;
 
     //storing reference from pawn

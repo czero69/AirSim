@@ -3,11 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "VehicleWheel.h"
+//#include "VehicleWheel.h"
 #include "CarWheelRear.generated.h"
 
 UCLASS()
-class UCarWheelRear : public UVehicleWheel
+class UCarWheelRear : public UObject
 {
     GENERATED_BODY()
 

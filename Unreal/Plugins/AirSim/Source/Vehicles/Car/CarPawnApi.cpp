@@ -1,17 +1,18 @@
 #include "CarPawnApi.h"
 #include "AirBlueprintLib.h"
 
-#include "PhysXVehicleManager.h"
+//#include "PhysXVehicleManager.h"
 
 CarPawnApi::CarPawnApi(ACarPawn* pawn, const msr::airlib::Kinematics::State* pawn_kinematics,
                        msr::airlib::CarApiBase* vehicle_api)
     : pawn_(pawn), pawn_kinematics_(pawn_kinematics), vehicle_api_(vehicle_api)
 {
-    movement_ = pawn->GetVehicleMovement();
+    //movement_ = pawn->GetVehicleMovement();
 }
 
 void CarPawnApi::updateMovement(const msr::airlib::CarApiBase::CarControls& controls)
 {
+    /*
     last_controls_ = controls;
 
     if (!controls.is_manual_gear && movement_->GetTargetGear() < 0)
@@ -24,19 +25,20 @@ void CarPawnApi::updateMovement(const msr::airlib::CarApiBase::CarControls& cont
     movement_->SetBrakeInput(controls.brake);
     movement_->SetHandbrakeInput(controls.handbrake);
     movement_->SetUseAutoGears(!controls.is_manual_gear);
+    */
 }
 
 msr::airlib::CarApiBase::CarState CarPawnApi::getCarState() const
 {
-    msr::airlib::CarApiBase::CarState state(
+    /*msr::airlib::CarApiBase::CarState state(
         movement_->GetForwardSpeed() / 100, //cm/s -> m/s
         movement_->GetCurrentGear(),
         movement_->GetEngineRotationSpeed(),
         movement_->GetEngineMaxRotationSpeed(),
         last_controls_.handbrake,
         *pawn_kinematics_,
-        vehicle_api_->clock()->nowNanos());
-    return state;
+        vehicle_api_->clock()->nowNanos());*/
+    return msr::airlib::CarApiBase::CarState();
 }
 
 void CarPawnApi::reset()
@@ -51,9 +53,9 @@ void CarPawnApi::reset()
             phys_comp->SetPhysicsLinearVelocity(FVector::ZeroVector);
             phys_comp->SetSimulatePhysics(false);
         }
-        movement_->ResetMoveState();
-        movement_->SetActive(false);
-        movement_->SetActive(true, true);
+        //movement_->ResetMoveState();
+        //movement_->SetActive(false);
+        //movement_->SetActive(true, true);
         vehicle_api_->setCarControls(msr::airlib::CarApiBase::CarControls());
         updateMovement(msr::airlib::CarApiBase::CarControls());
 

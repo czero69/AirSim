@@ -20,11 +20,5 @@
       "Type": "Runtime",
       "LoadingPhase": "PreDefault"
     }
-  ],
-  "Plugins": [
-	  {
-		  "Name": "PhysXVehicles",
-		  "Enabled": true
-	  }
   ]
 }

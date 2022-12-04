@@ -23,7 +23,7 @@ void CarPawnSimApi::initialize()
                                             sensor_factory,
                                             *getGroundTruthKinematics(),
                                             *getGroundTruthEnvironment());
-    pawn_api_ = std::unique_ptr<CarPawnApi>(new CarPawnApi(static_cast<ACarPawn*>(getPawn()), getGroundTruthKinematics(), vehicle_api_.get()));
+    //pawn_api_ = std::unique_ptr<CarPawnApi>(new CarPawnApi(static_cast<ACarPawn*>(getPawn()), getGroundTruthKinematics(), vehicle_api_.get()));
 
     //TODO: should do reset() here?
     joystick_controls_ = msr::airlib::CarApiBase::CarControls();
@@ -37,12 +37,12 @@ std::string CarPawnSimApi::getRecordFileLine(bool is_header_line) const
                "Throttle\tSteering\tBrake\tGear\tHandbrake\tRPM\tSpeed\t";
     }
 
-    const auto& state = pawn_api_->getCarState();
+    //const auto& state = pawn_api_->getCarState();
 
     std::ostringstream ss;
     ss << common_line;
     ss << current_controls_.throttle << "\t" << current_controls_.steering << "\t" << current_controls_.brake << "\t";
-    ss << state.gear << "\t" << state.handbrake << "\t" << state.rpm << "\t" << state.speed << "\t";
+    //ss << state.gear << "\t" << state.handbrake << "\t" << state.rpm << "\t" << state.speed << "\t";
 
     return ss.str();
 }
@@ -135,12 +135,12 @@ void CarPawnSimApi::updateCarControls()
     if (!vehicle_api_->isApiControlEnabled()) {
         //all car controls from anywhere must be routed through API component
         vehicle_api_->setCarControls(current_controls_);
-        pawn_api_->updateMovement(current_controls_);
+        //pawn_api_->updateMovement(current_controls_);
     }
     else {
         UAirBlueprintLib::LogMessageString("Control Mode: ", "API", LogDebugLevel::Informational);
         current_controls_ = vehicle_api_->getCarControls();
-        pawn_api_->updateMovement(current_controls_);
+        //pawn_api_->updateMovement(current_controls_);
     }
     UAirBlueprintLib::LogMessageString("Accel: ", std::to_string(current_controls_.throttle), LogDebugLevel::Informational);
     UAirBlueprintLib::LogMessageString("Break: ", std::to_string(current_controls_.brake), LogDebugLevel::Informational);
@@ -154,13 +154,13 @@ void CarPawnSimApi::resetImplementation()
 {
     PawnSimApi::resetImplementation();
 
-    pawn_api_->reset();
+    //pawn_api_->reset();
 }
 
 //physics tick
 void CarPawnSimApi::update()
 {
-    pawn_api_->update();
+    //pawn_api_->update();
 
     PawnSimApi::update();
 }
