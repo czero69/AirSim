@@ -1,0 +1,167 @@
+{
+  "SettingsVersion": 1.2,
+  "SimMode": "ComputerVision",
+  "ViewMode": "Fpv",
+  "OriginGeopoint": {
+    "Latitude": -721.720,
+    "Longitude": -387.960,
+    "Altitude": 1.000
+  },
+  "CameraDefaults": {
+    "CaptureSettings": [
+      {
+        "ImageType": 0,
+        "Width": 3840,
+        "Height": 2160,
+        "FOV_Degrees": 90
+      },
+      {
+        "ImageType": 5,
+        "Width": 3840,
+        "Height": 2160,
+        "FOV_Degrees": 90
+      },
+      {
+        "ImageType": 6,
+        "Width": 3840,
+        "Height": 2160,
+        "FOV_Degrees": 90,
+        "TargetGamma": 1.0
+      },
+      {
+        "ImageType": 1,
+        "Width": 3840,
+        "Height": 2160,
+        "FOV_Degrees": 90
+      },
+      {
+        "ImageType": 10,
+        "Width": 3840,
+        "Height": 2160,
+        "FOV_Degrees": 90
+      },
+      {
+        "ImageType": 11,
+        "Width": 3840,
+        "Height": 2160,
+        "FOV_Degrees": 90
+      },
+      {
+        "ImageType": 13,
+        "Width": 3840,
+        "Height": 2160,
+        "FOV_Degrees": 90
+      },
+      {
+        "ImageType": 14,
+        "Width": 3840,
+        "Height": 2160,
+        "FOV_Degrees": 90
+      },
+      {
+        "ImageType": 15,
+        "Width": 3840,
+        "Height": 2160,
+        "FOV_Degrees": 90
+      },
+      {
+        "ImageType": 16,
+        "Width": 3840,
+        "Height": 2160,
+        "FOV_Degrees": 90
+      },
+      {
+        "ImageType": 17,
+        "Width": 3840,
+        "Height": 2160,
+        "FOV_Degrees": 90
+      },
+      {
+        "ImageType": 18,
+        "Width": 3840,
+        "Height": 2160,
+        "FOV_Degrees": 90
+      },
+      {
+        "ImageType": 19,
+        "Width": 3840,
+        "Height": 2160,
+        "FOV_Degrees": 90
+      },
+      {
+        "ImageType": 20,
+        "Width": 3840,
+        "Height": 2160,
+        "FOV_Degrees": 90
+      },
+      {
+        "ImageType": 23,
+        "Width": 3840,
+        "Height": 2160,
+        "FOV_Degrees": 90
+      },
+      {
+        "ImageType": 24,
+        "Width": 3840,
+        "Height": 2160,
+        "FOV_Degrees": 90
+      }
+    ],
+    "X": -721.720, "Y": -387.960, "Z": 1.000,
+    "Pitch": 0.0, "Roll": 0.0, "Yaw": 0.0
+  },
+    "Recording": {
+      "Cameras": [
+        {
+          "CameraName": "0",
+          "ImageType": 5
+        },
+        {
+          "CameraName": "0",
+          "ImageType": 6
+        },
+        {
+          "CameraName": "0",
+          "ImageType": 1,
+          "PixelsAsFloat": true,
+          "Compress": false
+        },
+        {
+          "CameraName": "0",
+          "ImageType": 10,
+          "PixelsAsFloatRGB": true,
+          "Compress": false
+        },
+        {
+          "CameraName": "0",
+          "ImageType": 10
+        }
+      ]
+    },
+    "SubWindows": [
+      {
+        "WindowID": 0,
+        "CameraName": "0",
+        "ImageType": 10,
+        "VehicleName": "",
+        "Visible": false,
+        "External": false
+      },
+      {
+        "WindowID": 1,
+        "CameraName": "0",
+        "ImageType": 5,
+        "VehicleName": "",
+        "Visible": false,
+        "External": false
+      },
+      {
+        "WindowID": 2,
+        "CameraName": "0",
+        "ImageType": 6,
+        "VehicleName": "",
+        "Visible": false,
+        "External": false
+      }
+    ]
+  }

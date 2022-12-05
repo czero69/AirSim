@@ -2,10 +2,122 @@
 
 This branch is work in progress. Update, now it works with UE 5.1!
 
-Go here to see how I use my code in modified UE5 Citysample demo:
-https://acomoeye.atlassian.net/l/cp/qe5LA9Mq
+## Install Visual Studio and tools.
 
-# Using AirSim in UE5
+My stack:
+- Visual Studio 2022
+- Windows 10 SDK (10.0.18362.0)
+
+> :warning: **The version needs to be 2022**: (Airsim Repo will not accept other toolset by default when manual building). Pre-built libraries are also shipped with this toolchain and linker will not be able to match them with other versions.
+
+## Get latest Unreal Engine 5.1 Release branch
+
+You need 5.1 Unreal Engine Version (worked also in 5.01-5.03 in the past).
+If you are not using stencil buffers for cars (and other object), you can use marketplace ue5 build.
+
+Follow the instructions, for generating visual files for Visual Studio 2022 use this flag:
+
+```bash
+GenerateProjectFiles.bat -2022
+```
+
+In case you want to make similar workaround as me to unlcock stencil buffers for cars, you need to build UE5 from scratch with small modification.
+
+Slight modification of UE5 sourcecode is needed to overcome one bug (caused by numerous non-nanite meshes, see explanation below).
+
+### Mentioned modification:
+
+1. go to 
+
+Engine/Source/Runtime/D3D12RHI/Private/D3D12Adapter.cpp
+2. please comment this line in TrackAllocationData method:
+
+```cpp
+check(!TrackedAllocationData.Contains(InAllocation));
+```
+
+so it becames:
+
+```cpp
+//check(!TrackedAllocationData.Contains(InAllocation));
+```
+
+> :information_source: **non-nanite mashes mix causes inAllocation error**: Nanite meshes do not currently support: Custom depth or stencil. The workaround is about adding invisiblle non-nanite meshes on top of nanite meshes that can write to stencils. But this for some reason it breaks InAllocation method in this project.
+
+## A. Get modified CitySample dem
+
+Not yet available (300GB)
+
+## B. Download CitySample 5.1 version from epic store/marketplace 
+
+build airsim plugin from this branch. Follow default airsim building instructions. After you have build a plugin from the proper command prompt (visual 2022) with build.cmd, copy a plugin dir (AirSim→Unreal→Plugins)  to CitySample Project plugins dir (CitySample→Plugins). 
+
+Generate Visual studio project files (right click on .uproject, select proper UE5 version → generate)
+
+When it compiles, select CitySample Project in Visual and press CTRL+F5 (run and detach). 
+Then, in the editor open Map\Big_City_LVL (it will take a while).
+
+When done, you can package a project or you can run it directly from the editor :arrow_forward: . In both cases Airsim plugin will be working. The second one is good for quick tests. Please note, that first time UE5 is running this demo, everything will take a longer time.
+
+modify “World Settings->Selected Gamemode”. Change HUD to SimHUD.
+
+![AirSim in UE5](readme-screenshots/gamemode_ue5_airsim.png?raw=true "select proper hud as SimHUD")
+
+Now at this stage you should be able to run a Citysample demo from the editor or package it. 
+
+> :warning: **Record button broken - use python script**: Please note that for now red Recording airsim button is not working (will crash). This is because I didnt fix yet velococity 3 channel float buffer yet there. For now I am grabbing gbuffers and image from a python script.
+
+> :warning: **Nanite stencils not yet supported in UE5.1**: For now (as of UE 5.1) nanite does not support writing to stencil buffers (see in official doc Nanite Virtualized Geometry ). (humans/character stencil works, but car/street/buidling are not writing to stencil buffers). As a workaround I am adding invisible to rgb no-nanite meshes - will update this tutorial later how I am making it, but I did it only for cars models so far.
+
+After packaging, you are ready to go wtih the next steps.
+
+> :information_source: **Solution for not correct VS toolchain picked up when building CitySample**: I have set confing in Citysample project now explicitly to use VS 2022. But still, if you have older Visual Studio installed in parallel, other toolchain might be choose by default. To change toolchain, open UE5, create empty project, and set toolchain for the project and for the editor in two places. 
+- Edit → Project Settings → Platforms → Windows → Toolchain → CompilerVersion → VS 2022
+- Editor Preferences →  search for “Source Code Editor” → VS 2022 (or Engine Settings → “Source Code” section. )
+
+## Get Airsim Config File
+
+Paste a config json file to your "Documents/Airsim" dir. This File sets up “computer vision mode”, resolutions and how buffers are saved.
+
+My config is in my_json dir:
+
+[file.pdf](my_json/settings.json "my_json/settings.json")
+
+## Clone modified Airsim Repo
+
+Clone modified Airsim repo and switch to citysample branch (possibly you already have it when you followed step B “B. Download CitySample 5.1 version from epic store/marketplace”).
+
+## How to set up python environment
+
+Install Conda, open Anaconda Prompt
+
+```bash
+conda create --name airsim python=3.8
+```
+
+cd to Airsim root dir
+
+```bash
+conda activate airsim
+cd PythonClient\computer_vision\UECapture
+pip install -r requirements.txt
+pip install tqdm
+pip install --user numpy numpy-quaternion
+python -m pip install -e ./
+# when you open Modified Citysample UE5 demo with our Airsim plugin, run
+python main.py --record --verbose
+```
+
+## Summary
+
+```bash
+python main.py --record
+``` 
+
+Python client should connect with compiled running ue5 citysample demo and move camera. UE5 game environment should be slowed down 100x times and you see camera teleporting and gbuffers being saved to hdd.
+
+
+# Using AirSim in UE5 (OLD)
 
 This is bit older instruction how to use it in UE 5.01-5.1
 
