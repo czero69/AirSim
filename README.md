@@ -47,14 +47,14 @@ Not yet available (300GB)
 
 ## B. Download CitySample 5.1 version from epic store/marketplace 
 
-build airsim plugin from this branch. Follow default airsim building instructions. After you have build a plugin from the proper command prompt with build.cmd (please go with Visual 2022 cmd), copy a plugin dir (AirSim→Unreal→Plugins) to CitySample Project plugins dir (CitySample→Plugins). 
+build airsim plugin from this branch. Follow default [airsim building instructions](https://microsoft.github.io/AirSim/build_windows/). After you have build a plugin from the proper command prompt with build.cmd (please go with Visual 2022 cmd), copy a plugin dir (AirSim→Unreal→Plugins) to CitySample Project plugins dir (CitySample→Plugins). 
 
-Generate Visual studio project files (right click on .uproject, select proper UE5 version → generate)
+Generate Visual studio project files (right click on .uproject, select proper UE5 version → generate). Add "airsim" to .uproject and Config\DefaultGame.ini. Follow these instructions: [add airsim to .uproject](https://microsoft.github.io/AirSim/unreal_custenv/)
 
 When it compiles, select CitySample Project in Visual and press CTRL+F5 (run and detach). 
 Then, in the editor open Map\Big_City_LVL (it will take a while).
 
-When done, you can package a project or you can run it directly from the editor :arrow_forward: . In both cases Airsim plugin will be working. The second one is good for quick tests. Please note, that first time UE5 is running this demo, everything will take a longer time.
+When done, you can package a project or you can run it directly from the editor :arrow_forward:. In both cases Airsim plugin will be working. The second one is good for quick tests. Please note, that first time UE5 is running this demo, everything will take a longer time.
 
 modify “World Settings->Selected Gamemode”. Change HUD to SimHUD.
 
