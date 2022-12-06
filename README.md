@@ -47,7 +47,7 @@ Not yet available (300GB)
 
 ## B. Download CitySample 5.1 version from epic store/marketplace 
 
-build airsim plugin from this branch. Follow default [airsim building instructions](https://microsoft.github.io/AirSim/build_windows/). After you have build a plugin from the proper command prompt with build.cmd (please go with Visual 2022 cmd), copy a plugin dir (AirSim→Unreal→Plugins) to CitySample Project plugins dir (CitySample→Plugins). 
+Build airsim plugin from this branch the same way as in official [airsim building instructions](https://microsoft.github.io/AirSim/build_windows/). After you have build a plugin from the proper command prompt with build.cmd (please go with Visual 2022 cmd), copy a plugin dir (AirSim→Unreal→Plugins) to CitySample Project plugins dir (CitySample→Plugins). 
 
 Generate Visual studio project files (right click on .uproject, select proper UE5 version → generate). Add "airsim" to .uproject and Config\DefaultGame.ini. Follow these instructions: [add airsim to .uproject](https://microsoft.github.io/AirSim/unreal_custenv/)
 
