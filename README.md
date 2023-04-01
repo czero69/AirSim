@@ -14,42 +14,64 @@ My stack:
 
 > :warning: **The version needs to be 2022**: (Airsim Repo will not accept other toolset by default when manual building). Pre-built libraries are also shipped with this toolchain and linker will not be able to match them with other versions.
 
-## Get latest Unreal Engine 5.1 Release branch
+## Get Unreal Engine
 
-You need 5.1 Unreal Engine Version (worked also in 5.01-5.03 in the past).
-If you are not using stencil buffers for cars (and other object), you can use marketplace ue5 build.
+### UE 5.1 stock version (no Stencil support)
 
-Follow the instructions, for generating visual files for Visual Studio 2022 use this flag:
+You need 5.1 Unreal Engine Version (worked also in 5.01-5.03 in the past), you can use marketplace ue5 build.
+Note with version 5.1 and older, you will not have any segmentation masks except only humans. This is because back then nanite was not working with custom stencil buffer writing.
+
+
+### Custom UE 5.2 (Stencils are supported)
+
+- git clone ue-5 main branch from official repos https://github.com/EpicGames/UnrealEngine/tree/ue5-main 
+
+
+- checkout exactly this commit. Note: it will not work with more newer commits! (Changes in Mass will not compile with current citysample) 
+```bash
+c825148dc6e018f358c5d36346c8698c47835a48
+```
+
+- Generate project files. For generating visual files for Visual Studio 2022 use this flag:
 
 ```bash
 GenerateProjectFiles.bat -2022
 ```
 
-In case you want to make similar workaround as me to unlcock stencil buffers for cars, you need to build UE5 from scratch with small modification.
-
-Slight modification of UE5 sourcecode is needed to overcome one bug (caused by numerous non-nanite meshes, see explanation below).
-
-### Mentioned modification:
-
-1. go to 
-
+- go to:
 ```bash
-Engine/Source/Runtime/D3D12RHI/Private/D3D12Adapter.cpp
+Engine/Plugins/Experimental/ChaosUserDataPT/Source/ChaosUserDataPT/Public/ChaosUserDataPT.h
 ```
-
-2. please comment this line in TrackAllocationData method, so it becames:
-
+and change 102 line to:
 ```cpp
-//check(!TrackedAllocationData.Contains(InAllocation));
+if (const FPhysicsSolverBase* MySolver = this->GetSolver())
 ```
 
-> :information_source: **non-nanite mashes mix causes inAllocation error**: Nanite meshes do not currently support custom depth or stencil. The workaround is about adding invisiblle non-nanite meshes on top of nanite meshes that can write to stencils. But this for some reason it breaks InAllocation method in this project. This small trick with commenting above check makes my ue5 citysample build running without runtime errors.
+- go to:
+```bash
+Engine/Plugins/Runtime/MassEntity/Source/MassEntity/Public/MassRequirements.h
+```
+and change (comment) 199 line(s) to:
+```cpp
+//checkf(FragmentRequirements.FindByPredicate([](const FMassFragmentRequirementDescription& Item) { return Item.StructType == T::StaticStruct(); }) == nullptr
+	//, TEXT("Duplicated requirements are not supported. %s already present"), *T::StaticStruct()->GetName());
+```
 
-## A. Get modified CitySample dem
+- if you have compiler errors in ue5-main related to include order version, you can try for some selected something.Targeet.cs to add this line. In the end it should work without it, but for me this include ordering version is now a little buggy and random.
 
-Not yet available (300GB)
+```c#
+IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_2;
+```
 
-## B. Download CitySample 5.1 version from epic store/marketplace 
+> :information_source: **Stencils support only starting from UE 5.2**: Writing to custom stencil depth buffers is possible starting from UE 5.2. If you want to have stencil buffers, you need UE 5.2 version with above modifications 
+
+## A. Get modified CitySample demo with Airsim plugin compiled
+
+Not yet available (300GB). I will share this possibly somehow in the future.
+
+## B. Download CitySample (5.1 version) from epic store/marketplace and build Airsim plugin for your own
+
+Now it is supported also with ue 5.2 above commit checkout. 
 
 Build airsim plugin from this branch the same way as in official [airsim building instructions](https://microsoft.github.io/AirSim/build_windows/). After you have build a plugin from the proper command prompt with build.cmd (please go with Visual 2022 cmd), copy a plugin dir (AirSim→Unreal→Plugins) to CitySample Project plugins dir (CitySample→Plugins). 
 
