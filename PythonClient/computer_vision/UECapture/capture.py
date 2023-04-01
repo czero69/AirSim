@@ -40,8 +40,14 @@ class Capture:
         # setting all to black first
         found = self.client.simSetSegmentationObjectID("[\w]*", 0, True);
 
+        print("assets len:", len(self.client.simListAssets()))
+        print("list objects:", len(self.client. simListSceneObjects()))
+        # simSetSegmentationObjectID() simGetSegmentationObjectID
+
+
+
         # set humans (including drivers, and far away humans)
-        found = self.client.simSetSegmentationObjectID("[\w]*MASS[\w]*", 17, True)  # small humans and drivers
+        found = self.client.simSetSegmentationObjectID("[\w]*MASS[\w]*", 17, True)  # small humans and drivers, everything MASS not captured later
         found = self.client.simSetSegmentationObjectID("[\w]*CROWD[\w]*", 99, True)
         found = self.client.simSetSegmentationObjectID("[\w]*human[\w]*", 99, True)
         found = self.client.simSetSegmentationObjectID("[\w]*person[\w]*", 99, True)
@@ -50,10 +56,77 @@ class Capture:
         # set vehicles
         found = self.client.simSetSegmentationObjectID("BP_MassTraffic[\w]*", 112, True)  # BP_MassTraffic
         found = self.client.simSetSegmentationObjectID("[\w]*veh[\w]*", 112, True)
-        found = self.client.simSetSegmentationObjectID("[\w]*Van[\w]*", 14, True)
+        found = self.client.simSetSegmentationObjectID("[\w]*Van[\w]*", 112, True)
         found = self.client.simSetSegmentationObjectID("[\w]*Car[\w]*", 112, True)
         found = self.client.simSetSegmentationObjectID("[\w]*Truck[\w]*", 112, True)
-        found = self.client.simSetSegmentationObjectID("[\w]*Traffic[\w]*", 112, True)
+        # found = self.client.simSetSegmentationObjectID("[\w]*Traffic[\w]*", 112, True)
+
+        # set road
+        found = self.client.simSetSegmentationObjectID("[\w]*GROUND[\w]*", 44, True)
+        found = self.client.simSetSegmentationObjectID("[\w]*DECALS[\w]*", 44, True)
+        found = self.client.simSetSegmentationObjectID("[\w]*road[\w]*", 44, True)
+        found = self.client.simSetSegmentationObjectID("[\w]*freeway[\w]*", 44, True)
+
+        # set buildings
+        camera_name = "0"
+        image_type = airsim.ImageType.Scene
+        self.client.simAddDetectionFilterMeshName(camera_name, image_type, "BLDG*")
+        self.client.simAddDetectionFilterMeshName(camera_name, image_type, "bldg*")
+        self.client.simAddDetectionFilterMeshName(camera_name, image_type, "*bldg*")
+        self.client.simAddDetectionFilterMeshName(camera_name, image_type, "[\w]*BLDG[\w]*")
+        #found = self.client.simSetSegmentationObjectID("BUILD[\w]*", 117, True)  # BP_MassTraffic
+        found = self.client.simSetSegmentationObjectID("[\w]*BLDG[\w]*", 117, True)
+        found = self.client.simSetSegmentationObjectID("[\w]*bldg[\w]*", 117, True)
+        #found = self.client.simSetSegmentationObjectID("[\w]*Hero[\w]*", 117, True)
+        #found = self.client.simSetSegmentationObjectID("[\w]*BLDG[\w]*", 117, True)
+        #found = self.client.simSetSegmentationObjectID("[\w]*BPP[\w]*", 117, True)
+        #found = self.client.simSetSegmentationObjectID("[\w]*BPC[\w]*", 117, True)
+        #found = self.client.simSetSegmentationObjectID("[\w]*ROOF[\w]*", 117, True)
+
+
+        # set road
+        found = self.client.simSetSegmentationObjectID("[\w]*GROUND[\w]*", 44, True)
+        found = self.client.simSetSegmentationObjectID("[\w]*DECALS[\w]*", 44, True)
+        found = self.client.simSetSegmentationObjectID("[\w]*road[\w]*", 44, True)
+        found = self.client.simSetSegmentationObjectID("[\w]*freeway[\w]*", 44, True)
+
+        # traffic signs
+
+        found = self.client.simSetSegmentationObjectID("[\w]*signage[\w]*", 119, True)
+        found = self.client.simSetSegmentationObjectID("[\w]*FWYSign[\w]*", 119, True)
+
+        # freeway sign frame
+        found = self.client.simSetSegmentationObjectID("[\w]*FreewaySign[\w]*", 120, True)
+
+        # building caffe-like signs
+        found = self.client.simSetSegmentationObjectID("[\w]*SignShort[\w]*", 121, True)
+        found = self.client.simSetSegmentationObjectID("[\w]*SignTall[\w]*", 121, True)
+
+        # set sky
+        found = self.client.simSetSegmentationObjectID("[\w]*SM_dome[\w]*", 69, True)
+        found = self.client.simSetSegmentationObjectID("[\w]*SM_sun[\w]*", 69, True)
+
+        # set street furniture
+        found = self.client.simSetSegmentationObjectID("[\w]*STREET_FURNITURE[\w]*", 122, True)
+
+        # set traffic light
+        found = self.client.simSetSegmentationObjectID("[\w]*TRAFFIC_LIGHT[\w]*", 123, True)
+
+        # set water
+        found = self.client.simSetSegmentationObjectID("[\w]*water_plane[\w]*", 43, True)
+
+        # set billboard and ads
+        found = self.client.simSetSegmentationObjectID("[\w]*Billboard[\w]*", 124, True)
+        found = self.client.simSetSegmentationObjectID("[\w]*StandingSignAd[\w]*", 124, True)
+
+        # set trees
+        found = self.client.simSetSegmentationObjectID("[\w]*StartingArea[\w]*", 11, True)
+        found = self.client.simSetSegmentationObjectID("[\w]*STREET_FURNITURE[\w]*", 11, True)
+
+        print("assets len:", len(self.client.simListAssets()))
+        print("list objects:", len(self.client.simListSceneObjects()))
+        print("END")
+
 
         # other things are not supported in stencil buffer due to nanite does not support
         # stencil buffer writing (as for UE 5.0.2)
