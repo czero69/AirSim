@@ -442,6 +442,25 @@ std::vector<std::string> UAirBlueprintLib::ListMatchingActors(const UObject* con
     return results;
 }
 
+
+std::vector<std::pair<std::string, std::string>> UAirBlueprintLib::ListMatchingActorsWithLabels(const UObject* context, const std::string& name_regex, const std::string& label_regex)
+{
+    std::vector<std::pair<std::string, std::string>> results;
+    auto world = context->GetWorld();
+    std::regex compiledRegexName(name_regex, std::regex::optimize);
+    std::regex compiledRegexLabel(label_regex, std::regex::optimize);
+    for (TActorIterator<AActor> actorIterator(world); actorIterator; ++actorIterator) {
+        AActor* actor = *actorIterator;
+        auto name = std::string(TCHAR_TO_UTF8(*actor->GetName()));
+        auto label = std::string(TCHAR_TO_UTF8(*actor->GetActorLabel()));
+        bool match_name = std::regex_match(name, compiledRegexName);
+        bool match_label = std::regex_match(label, compiledRegexLabel);
+        if (match_name && match_label)
+            results.push_back(std::make_pair(name, label));
+    }
+    return results;
+}
+
 std::vector<msr::airlib::MeshPositionVertexBuffersResponse> UAirBlueprintLib::GetStaticMeshComponents()
 {
     std::vector<msr::airlib::MeshPositionVertexBuffersResponse> meshes;

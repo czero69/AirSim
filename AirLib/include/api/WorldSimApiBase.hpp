@@ -67,6 +67,7 @@ namespace airlib
         virtual void simPlotTransformsWithNames(const vector<Pose>& poses, const vector<std::string>& names, float tf_scale, float tf_thickness, float text_scale, const vector<float>& text_color_rgba, float duration) = 0;
 
         virtual std::vector<std::string> listSceneObjects(const std::string& name_regex) const = 0;
+        virtual std::vector<std::pair<std::string, std::string>> listSceneObjectsWithLabels(const std::string& name_regex, const std::string& label_regex) const = 0;
         virtual Pose getObjectPose(const std::string& object_name) const = 0;
         virtual Vector3r getObjectScale(const std::string& object_name) const = 0;
         virtual bool setObjectPose(const std::string& object_name, const Pose& pose, bool teleport) = 0;

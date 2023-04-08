@@ -509,6 +509,11 @@ __pragma(warning(disable : 4239))
             return pimpl_->client.call("simListSceneObjects", name_regex).as<vector<string>>();
         }
 
+        vector<std::pair<string, string>> RpcLibClientBase::simListSceneObjectsWithLabels(const string& name_regex, const string& label_regex) const
+        {
+            return pimpl_->client.call("simListSceneObjectsWithLabels", name_regex, label_regex).as<vector<std::pair<string, string>>>();
+        }
+
         std::vector<std::string> RpcLibClientBase::simSwapTextures(const std::string& tags, int tex_id, int component_id, int material_id)
         {
             return pimpl_->client.call("simSwapTextures", tags, tex_id, component_id, material_id).as<vector<string>>();

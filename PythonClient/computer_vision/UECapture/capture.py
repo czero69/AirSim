@@ -35,13 +35,61 @@ class Capture:
         return pose, angles
 
     def setSegmentationIDs(self):
+        # THIS IS WORK IN PROGRESS - not yet working correctly
         # set Stencil Masks ids
 
         # setting all to black first
-        found = self.client.simSetSegmentationObjectID("[\w]*", 0, True);
+
+        found = self.client.simSetSegmentationObjectID("[\w]*", 0, True)
+        camera_name = "0"
+        image_type = airsim.ImageType.Scene
+        self.client.simSetDetectionFilterRadius(camera_name, image_type, 2000 * 100)
+
+        self.client.simAddDetectionFilterMeshName(camera_name, image_type, "[\w]*BLDG[\w]*")
+        self.client.simAddDetectionFilterMeshName(camera_name, image_type, "[\w]*STREET_FURNITURE[\w]*")
+        all_assets = self.client.simListAssets()
+        all_objs = self.client.simListSceneObjects()
+        all_objs_with_labels = self.client.simListSceneObjectsWithLabels()
+        objects = self.client.simGetDetections(camera_name=camera_name, image_type=image_type)
 
         print("assets len:", len(self.client.simListAssets()))
-        print("list objects:", len(self.client. simListSceneObjects()))
+        print("all obj len:", len(all_objs))
+        print("all obj with labels len:", len(all_objs_with_labels))
+        print("list objects:", len(self.client.simListSceneObjects()))
+        print("got objects:", len(objects))
+        # print("camera info:", self.client.simGetCameraInfo(camera_name=camera_name))
+
+        print("all_assets[15].name:", all_assets[15])
+
+        obj_in_list, not_in_list = [], []
+        for obj in objects:
+            if obj.name in all_objs:
+                obj_in_list.append(obj)
+            else:
+                not_in_list.append(obj)
+
+        #print(all_objs)
+       # for obj in all_objs:
+            # self.client.simSetSegmentationObjectID(obj, 17, True)
+
+        print("in list len: ", len(obj_in_list))
+        print("not_in_list len: ", len(not_in_list))
+
+        # This is how we can get all objects names and labels
+        # labels are the same as in the editor - this will get us to create proper stencil buffers
+        # print(all_objs_with_labels)
+
+        found = self.client.simSetSegmentationObjectID("TemplateActor_UAID[\w]*", 1, True)
+        found = self.client.simSetSegmentationObjectID("BPP_[\w]*", 2, True)
+        found = self.client.simSetSegmentationObjectID("CitySample_HLOD[\w]*", 3, True)
+        found = self.client.simSetSegmentationObjectID("BPC_SF_data[\w]*", 4, True)
+        found = self.client.simSetSegmentationObjectID("BPP_[\w]*", 5, True)
+        found = self.client.simSetSegmentationObjectID("BP_MantleBasedFXManagement[\w]*", 6, True)
+        found = self.client.simSetSegmentationObjectID("BPP_Tree[\w]*", 7, True)
+        found = self.client.simSetSegmentationObjectID("BPP_Plaza[\w]*", 8, True)
+        found = self.client.simSetSegmentationObjectID("BPP_Ground[\w]*", 9, True)
+
+
         # simSetSegmentationObjectID() simGetSegmentationObjectID
 
 
@@ -62,14 +110,13 @@ class Capture:
         # found = self.client.simSetSegmentationObjectID("[\w]*Traffic[\w]*", 112, True)
 
         # set road
+        '''
         found = self.client.simSetSegmentationObjectID("[\w]*GROUND[\w]*", 44, True)
         found = self.client.simSetSegmentationObjectID("[\w]*DECALS[\w]*", 44, True)
         found = self.client.simSetSegmentationObjectID("[\w]*road[\w]*", 44, True)
         found = self.client.simSetSegmentationObjectID("[\w]*freeway[\w]*", 44, True)
 
         # set buildings
-        camera_name = "0"
-        image_type = airsim.ImageType.Scene
         self.client.simAddDetectionFilterMeshName(camera_name, image_type, "BLDG*")
         self.client.simAddDetectionFilterMeshName(camera_name, image_type, "bldg*")
         self.client.simAddDetectionFilterMeshName(camera_name, image_type, "*bldg*")
@@ -126,6 +173,7 @@ class Capture:
         print("assets len:", len(self.client.simListAssets()))
         print("list objects:", len(self.client.simListSceneObjects()))
         print("END")
+        '''
 
 
         # other things are not supported in stencil buffer due to nanite does not support

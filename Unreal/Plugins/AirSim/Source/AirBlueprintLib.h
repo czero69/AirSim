@@ -77,6 +77,7 @@ public:
     static ULevelStreamingDynamic* CURRENT_LEVEL;
 
     static std::vector<std::string> ListMatchingActors(const UObject* context, const std::string& name_regex);
+    static std::vector<std::pair<std::string, std::string>> ListMatchingActorsWithLabels(const UObject* context, const std::string& name_regex, const std::string& label_regex);
     UFUNCTION(BlueprintCallable, Category = "AirSim|LevelAPI")
     static ULevelStreamingDynamic* loadLevel(UObject* context, const FString& level_name);
     UFUNCTION(BlueprintCallable, Category = "AirSim|LevelAPI")
