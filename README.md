@@ -1,10 +1,12 @@
 # Citysample with Airsim UE5
 
-This branch is work in progress. Update, now it works with UE 5.1!
+This branch is work in progress. Update, now it works with UE 5.1 (and UE 5.2 from ue5-main branch selected commit - see below)!
 
-Please guys help and vote for solving the issue with nanite unable to write to stencil buffer
-1. go here: https://issues.unrealengine.com/issue/UE-171655
-2. log-in (google or epic account) and vote for solving the issue
+Airsim limitations in UE5:
+- only airsim computervision mode is supported
+- record button is broken now (I am recording data with python script)
+
+I am using this project to record data (Images, Gbuffers, ...) in Unreal Engine 5 demo for machine learning project.
 
 ## Install Visual Studio and tools.
 
