@@ -345,8 +345,14 @@ std::string UAirBlueprintLib::GetMeshName<USkinnedMeshComponent>(USkinnedMeshCom
     case msr::airlib::AirSimSettings::SegmentationSetting::MeshNamingMethodType::StaticMeshName:
         if (mesh->SkeletalMesh)
             return std::string(TCHAR_TO_UTF8(*(mesh->SkeletalMesh->GetName())));
+            //return std::string(TCHAR_TO_UTF8(*(mesh->GetName())));
         else
             return "";
+    case msr::airlib::AirSimSettings::SegmentationSetting::MeshNamingMethodType::LabelName:
+        if (mesh->GetOwner())
+            return std::string(TCHAR_TO_UTF8(*(mesh->GetOwner()->GetActorLabel())));
+        else
+            return ""; // std::string(TCHAR_TO_UTF8(*(UKismetSystemLibrary::GetDisplayName(mesh))));
     default:
         return "";
     }
@@ -451,6 +457,14 @@ std::vector<std::pair<std::string, std::string>> UAirBlueprintLib::ListMatchingA
     std::regex compiledRegexLabel(label_regex, std::regex::optimize);
     for (TActorIterator<AActor> actorIterator(world); actorIterator; ++actorIterator) {
         AActor* actor = *actorIterator;
+        // a code to potentially return all meshes names
+        /*for (auto somethin : (actor->GetComponents()))
+        {
+            if (!Cast<UStaticMeshComponent>(somethin))
+                continue;
+            // code
+            ;
+        }*/
         auto name = std::string(TCHAR_TO_UTF8(*actor->GetName()));
         auto label = std::string(TCHAR_TO_UTF8(*actor->GetActorLabel()));
         bool match_name = std::regex_match(name, compiledRegexName);

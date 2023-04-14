@@ -384,6 +384,10 @@ namespace airlib
             return getWorldSimApi()->listSceneObjectsWithLabels(name_regex, label_regex);
             });
 
+        pimpl_->server.bind("simSetMeshNamingMethodByString", [&](const std::string& method_name) -> void {
+            getWorldSimApi()->SetMeshNamingMethodByString(method_name);
+            });
+
         pimpl_->server.bind("simLoadLevel", [&](const std::string& level_name) -> bool {
             return getWorldSimApi()->loadLevel(level_name);
         });

@@ -112,7 +112,12 @@ public:
         switch (mesh_naming_method_) {
         case msr::airlib::AirSimSettings::SegmentationSetting::MeshNamingMethodType::OwnerName:
             if (mesh->GetOwner())
+            {
+                //UE_LOG(LogTemp, Warning, TEXT("Mesh Owner name: %s"), *(mesh->GetOwner()->GetName()));
+                //if (mesh->GetStaticMesh())
+                    //UE_LOG(LogTemp, Warning, TEXT("Mesh Static name: %s"), *(mesh->GetStaticMesh()->GetName()));
                 return std::string(TCHAR_TO_UTF8(*(mesh->GetOwner()->GetName())));
+            }
             else
                 return ""; //std::string(TCHAR_TO_UTF8(*(UKismetSystemLibrary::GetDisplayName(mesh))));
         case msr::airlib::AirSimSettings::SegmentationSetting::MeshNamingMethodType::StaticMeshName:
@@ -120,6 +125,11 @@ public:
                 return std::string(TCHAR_TO_UTF8(*(mesh->GetStaticMesh()->GetName())));
             else
                 return "";
+        case msr::airlib::AirSimSettings::SegmentationSetting::MeshNamingMethodType::LabelName:
+            if (mesh->GetOwner())
+                return std::string(TCHAR_TO_UTF8(*(mesh->GetOwner()->GetActorLabel())));
+            else
+                return ""; //std::string(TCHAR_TO_UTF8(*(UKismetSystemLibrary::GetDisplayName(mesh))));
         default:
             return "";
         }

@@ -356,6 +356,42 @@ std::vector<std::pair<std::string, std::string>> WorldSimApi::listSceneObjectsWi
     return result;
 }
 
+//SetMeshNamingMethodByString
+void WorldSimApi::SetMeshNamingMethodByString(const std::string& method_name)
+{
+    // List of possible method names
+    std::vector<std::string> possible_methods = { "owner", "label", "mesh" };
+
+    // Find the index of method_name in possible_methods
+    auto it = std::find(possible_methods.begin(), possible_methods.end(), method_name);
+    int index = std::distance(possible_methods.begin(), it);
+
+    switch (index) {
+        // If method name is "owner"
+    case 0: {
+        UAirBlueprintLib::SetMeshNamingMethod(msr::airlib::AirSimSettings::SegmentationSetting::MeshNamingMethodType::OwnerName);
+        break;
+    }
+        // If method name is "label"
+    case 1: {
+        UAirBlueprintLib::SetMeshNamingMethod(msr::airlib::AirSimSettings::SegmentationSetting::MeshNamingMethodType::LabelName);
+        break;
+    }
+          // If method name is "mesh"
+    case 2: {
+        UAirBlueprintLib::SetMeshNamingMethod(msr::airlib::AirSimSettings::SegmentationSetting::MeshNamingMethodType::StaticMeshName);
+        break;
+    }
+
+          // Default case (method name not found in the list)
+    default: {
+        std::cout << "Invalid method name" << std::endl;
+        break;
+    }
+    }
+    
+}
+
 bool WorldSimApi::runConsoleCommand(const std::string& command)
 {
     bool succeeded = false;

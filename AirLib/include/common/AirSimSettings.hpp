@@ -359,7 +359,8 @@ namespace airlib
             enum class MeshNamingMethodType
             {
                 OwnerName,
-                StaticMeshName
+                StaticMeshName,
+                LabelName
             };
 
             InitMethodType init_method = InitMethodType::CommonObjectsRandomIDs;

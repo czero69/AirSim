@@ -68,6 +68,7 @@ namespace airlib
 
         virtual std::vector<std::string> listSceneObjects(const std::string& name_regex) const = 0;
         virtual std::vector<std::pair<std::string, std::string>> listSceneObjectsWithLabels(const std::string& name_regex, const std::string& label_regex) const = 0;
+        virtual void SetMeshNamingMethodByString(const std::string& method_name) = 0;
         virtual Pose getObjectPose(const std::string& object_name) const = 0;
         virtual Vector3r getObjectScale(const std::string& object_name) const = 0;
         virtual bool setObjectPose(const std::string& object_name, const Pose& pose, bool teleport) = 0;

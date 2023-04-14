@@ -603,6 +603,10 @@ class VehicleClient:
         """
         return self.client.call('simListSceneObjectsWithLabels', name_regex, label_regex)
 
+    def simSetMeshNamingMethodByString(self, method_name = 'owner'):
+
+        self.client.call('simSetMeshNamingMethodByString', method_name)
+
     def simLoadLevel(self, level_name):
         """
         Loads a level specified by its name
