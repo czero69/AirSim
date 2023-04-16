@@ -36,67 +36,67 @@ class Capture:
 
     def setSegmentationIDs(self):
 
+        #@todo as Label is not accessible in the packaged builds, move everything to unreal python script
+        # see AirSim\PythonClient\computer_vision\UECapture\set_stencils_from_editor.py how to run it from editor
+        # in editor, load level chunks from worldpartition and run for each chunk (as big as your RAM)
+
         #### first, set things by mesh->owner() ####
         # set all meshes which owner name is according to regexes
         self.client.simSetMeshNamingMethodByString('owner')
 
         # setting everything to black (unlabeled) first
-        found = self.client.simSetSegmentationObjectID("[\w]*", 0, True)
+        found = self.client.simSetSegmentationObjectID("[\w]*", 0, True) # unlabelled
         # all far away buildings
-        found = self.client.simSetSegmentationObjectID("[\w]*HLOD[\w]*", 3, True)
+        found = self.client.simSetSegmentationObjectID("[\w]*HLOD[\w]*", 18, True) # building
         found = self.client.simSetSegmentationObjectID("[\w]*MASS[\w]*", 17,
                                                        True)  # small humans and drivers, everything MASS not captured later
-        found = self.client.simSetSegmentationObjectID("[\w]*CROWD[\w]*", 99, True)
-        found = self.client.simSetSegmentationObjectID("[\w]*human[\w]*", 99, True)
-        found = self.client.simSetSegmentationObjectID("[\w]*person[\w]*", 99, True)
-        found = self.client.simSetSegmentationObjectID("[\w]*pedestrian[\w]*", 99, True)
+        found = self.client.simSetSegmentationObjectID("[\w]*CROWD[\w]*", 17, True)
+        found = self.client.simSetSegmentationObjectID("[\w]*human[\w]*", 17, True)
+        found = self.client.simSetSegmentationObjectID("[\w]*person[\w]*", 17, True)
+        found = self.client.simSetSegmentationObjectID("[\w]*pedestrian[\w]*", 17, True)
         # set vehicles
-        found = self.client.simSetSegmentationObjectID("BP_MassTraffic[\w]*", 112, True)  # BP_MassTraffic
-        found = self.client.simSetSegmentationObjectID("[\w]*veh[\w]*", 112, True)
-        found = self.client.simSetSegmentationObjectID("[\w]*Van[\w]*", 112, True)
-        found = self.client.simSetSegmentationObjectID("[\w]*Car[\w]*", 112, True)
-        found = self.client.simSetSegmentationObjectID("[\w]*Truck[\w]*", 112, True)
-        found = self.client.simSetSegmentationObjectID("[\w]*Traffic[\w]*", 112, True)
+        found = self.client.simSetSegmentationObjectID("BP_MassTraffic[\w]*", 42, True)  # BP_MassTraffic
+        found = self.client.simSetSegmentationObjectID("[\w]*veh[\w]*", 42, True)
+        found = self.client.simSetSegmentationObjectID("[\w]*Van[\w]*", 42, True)
+        found = self.client.simSetSegmentationObjectID("[\w]*Car[\w]*", 42, True)
+        found = self.client.simSetSegmentationObjectID("[\w]*Truck[\w]*", 42, True)
+        found = self.client.simSetSegmentationObjectID("[\w]*Traffic[\w]*", 42, True)
 
         #### below set all mesh via owner->getActorLabel() ##########
-        self.client.simSetMeshNamingMethodByString('label')
-        found = self.client.simSetSegmentationObjectID("[\w]*Street_Furniture[\w]*", 2, True)
-        found = self.client.simSetSegmentationObjectID("[\w]*Sidewalk[\w]*", 2, True)
-        found = self.client.simSetSegmentationObjectID("[\w]*StartingArea[\w]*", 2, True)
-        found = self.client.simSetSegmentationObjectID("[\w]*Plaza[\w]*", 2, True)
-        found = self.client.simSetSegmentationObjectID("[\w]*Bldg[\w]*", 3, True)
-        found = self.client.simSetSegmentationObjectID("[\w]*_bld_[\w]*", 3, True)
-        found = self.client.simSetSegmentationObjectID("[\w]*Roof[\w]*", 3, True)
-        found = self.client.simSetSegmentationObjectID("[\w]*Decal[\w]*", 4, True)
-        found = self.client.simSetSegmentationObjectID("[\w]*Ground[\w]*", 4, True)
-        found = self.client.simSetSegmentationObjectID("[\w]*Road[\w]*", 4, True)
-        found = self.client.simSetSegmentationObjectID("[\w]*UnderPass[\w]*", 4, True)
-        found = self.client.simSetSegmentationObjectID("[\w]*freeway[\w]*", 5, True)
-        found = self.client.simSetSegmentationObjectID("[\w]*Billboard[\w]*", 6, True)
-        # found = self.client.simSetSegmentationObjectID("[\w]*Traffic_Light[\w]*", 7, True)
-        found = self.client.simSetSegmentationObjectID("[\w]*water_plane[\w]*", 9, True)
+        # self.client.simSetMeshNamingMethodByString('label')
+        found = self.client.simSetSegmentationObjectID("[\w]*Street_Furniture[\w]*", 2, True) # street furniture -> 12
+        found = self.client.simSetSegmentationObjectID("[\w]*Sidewalk[\w]*", 2, True) # street furniture
+        found = self.client.simSetSegmentationObjectID("[\w]*StartingArea[\w]*", 2, True) # street furniture
+        found = self.client.simSetSegmentationObjectID("[\w]*Plaza[\w]*", 2, True) # street furniture
+        found = self.client.simSetSegmentationObjectID("[\w]*Bldg[\w]*", 18, True) # building
+        found = self.client.simSetSegmentationObjectID("[\w]*_bld_[\w]*", 18, True) # building
+        found = self.client.simSetSegmentationObjectID("[\w]*Roof[\w]*", 18, True) # building
+        found = self.client.simSetSegmentationObjectID("[\w]*Decal[\w]*", 7, True) # road -> 9
+        found = self.client.simSetSegmentationObjectID("[\w]*Ground[\w]*", 7, True) # road
+        found = self.client.simSetSegmentationObjectID("[\w]*Road[\w]*", 7, True) # road
+        found = self.client.simSetSegmentationObjectID("[\w]*UnderPass[\w]*", 7, True) # road
+        found = self.client.simSetSegmentationObjectID("[\w]*freeway[\w]*", 9, True) # infrastructure
+        found = self.client.simSetSegmentationObjectID("[\w]*Billboard[\w]*", 37, True) # billboard and traffic signs
+        found = self.client.simSetSegmentationObjectID("[\w]*water_plane[\w]*", 28, True) # water -> 10
 
         #### Finally, set smaller granuality stencils by staticMesh ##########
         self.client.simSetMeshNamingMethodByString('mesh')
         found = self.client.simSetSegmentationObjectID("[\w]*bench[\w]*", 2, True)  # street furniture
         found = self.client.simSetSegmentationObjectID("[\w]*stairs[\w]*", 2, True)  # street furniture
         found = self.client.simSetSegmentationObjectID("[\w]*lamp[\w]*", 2, True)  # street furniture
-        #found = self.client.simSetSegmentationObjectID("[\w]*border_a_wall[\w]*", 2, True)  # street furniture
-        #found = self.client.simSetSegmentationObjectID("[\w]*oasis[\w]*", 2, True)  # street furniture
-        # found = self.client.simSetSegmentationObjectID("[\w]*sidewalk[\w]*", 4, True) # road
-        # found = self.client.simSetSegmentationObjectID("[\w]*plaza[\w]*", 4, True)  # road
-        found = self.client.simSetSegmentationObjectID("[\w]*bldg_[\w]*", 3, True)
-        found = self.client.simSetSegmentationObjectID("[\w]*roof_[\w]*", 3, True)
-        found = self.client.simSetSegmentationObjectID("[\w]*Sign[\w]*", 6, True) # traffic signs @ signdirect signwarn
-        found = self.client.simSetSegmentationObjectID("[\w]*signage[\w]*", 5, True)
-        # found = self.client.simSetSegmentationObjectID("[\w]*platform[\w]*", 5, True)  # traffic signs @ signdirect signwarn
-        found = self.client.simSetSegmentationObjectID("[\w]*Light[\w]*", 7, True)
-        found = self.client.simSetSegmentationObjectID("[\w]*dirt_[\w]*", 8, True)  # terrain
-        found = self.client.simSetSegmentationObjectID("[\w]*rock_[\w]*", 8, True)  # terrain
-        found = self.client.simSetSegmentationObjectID("[\w]*vehicle[\w]*", 112, True)
-        found = self.client.simSetSegmentationObjectID("[\w]*wheel[\w]*", 112, True)
-        found = self.client.simSetSegmentationObjectID("[\w]*EuropeanHorn[\w]*", 10, True) # vegetation
-        found = self.client.simSetSegmentationObjectID("[\w]*SM_DOME[\w]*", 11, True)  # sky
+        found = self.client.simSetSegmentationObjectID("[\w]*Road[\w]*", 7, True)  # road
+        found = self.client.simSetSegmentationObjectID("[\w]*curb[\w]*", 7, True)  # road
+        found = self.client.simSetSegmentationObjectID("[\w]*bldg_[\w]*", 18, True) # building
+        found = self.client.simSetSegmentationObjectID("[\w]*roof_[\w]*", 18, True) # building
+        found = self.client.simSetSegmentationObjectID("[\w]*Sign[\w]*", 37, True) # billboard and traffic signs
+        found = self.client.simSetSegmentationObjectID("[\w]*signage[\w]*", 9, True) # infrastructure
+        found = self.client.simSetSegmentationObjectID("[\w]*Light[\w]*", 32, True) # lights and traffic lights
+        found = self.client.simSetSegmentationObjectID("[\w]*dirt_[\w]*", 39, True)  # terrain
+        found = self.client.simSetSegmentationObjectID("[\w]*rock_[\w]*", 39, True)  # terrain
+        found = self.client.simSetSegmentationObjectID("[\w]*vehicle[\w]*", 42, True)
+        found = self.client.simSetSegmentationObjectID("[\w]*wheel[\w]*", 42, True)
+        found = self.client.simSetSegmentationObjectID("[\w]*EuropeanHorn[\w]*", 31, True) # vegetation, trees
+        found = self.client.simSetSegmentationObjectID("[\w]*SM_DOME[\w]*", 35, True)  # sky
 
     def read_camera_paths_from_disk(self, rotation_notation='quaternion'):
         camera_patches = {'rotation_notation': rotation_notation, 'patches': {}}

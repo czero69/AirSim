@@ -88,7 +88,12 @@ modify “World Settings->Selected Gamemode”. Change HUD to SimHUD.
 
 ![AirSim in UE5](readme-screenshots/gamemode_ue5_airsim.png?raw=true "select proper hud as SimHUD")
 
-Now at this stage you should be able to run a Citysample demo from the editor or package it. 
+Now at this stage you should be able to run a Citysample demo from the editor or package it.
+
+If you want to get stencils/segmentation-masks, please check (set your stencil values accordingly)
+AirSim\PythonClient\computer_vision\UECapture\set_stencils_from_editor.py
+and run it from unreal engine python command.
+
 After packaging, you are ready to go wtih the next steps.
 
 > :warning: **Record button broken - use python script**: Please note that for now red Recording airsim button is not working (will crash). This is because I didnt fix yet velococity 3 channel float buffer yet there. For now I am grabbing gbuffers and image from a python script. For now, please also use python script instead of record button.
