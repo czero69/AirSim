@@ -47,7 +47,7 @@ class Capture:
         # setting everything to black (unlabeled) first
         found = self.client.simSetSegmentationObjectID("[\w]*", 0, True) # unlabelled
         # all far away buildings
-        found = self.client.simSetSegmentationObjectID("[\w]*HLOD[\w]*", 18, True) # building
+        # found = self.client.simSetSegmentationObjectID("[\w]*HLOD[\w]*", 18, True) # building
         found = self.client.simSetSegmentationObjectID("[\w]*MASS[\w]*", 17,
                                                        True)  # small humans and drivers, everything MASS not captured later
         found = self.client.simSetSegmentationObjectID("[\w]*CROWD[\w]*", 17, True)
@@ -63,6 +63,8 @@ class Capture:
         found = self.client.simSetSegmentationObjectID("[\w]*Traffic[\w]*", 42, True)
 
         #### below set all mesh via owner->getActorLabel() ##########
+        # these are now set up in editor before map is packaged, see set_stencils_from_editor.py
+        '''
         self.client.simSetMeshNamingMethodByString('label')
         found = self.client.simSetSegmentationObjectID("[\w]*Street_Furniture[\w]*", 2, True) # street furniture -> 12
         found = self.client.simSetSegmentationObjectID("[\w]*Sidewalk[\w]*", 2, True) # street furniture
@@ -97,6 +99,7 @@ class Capture:
         found = self.client.simSetSegmentationObjectID("[\w]*wheel[\w]*", 42, True)
         found = self.client.simSetSegmentationObjectID("[\w]*EuropeanHorn[\w]*", 31, True) # vegetation, trees
         found = self.client.simSetSegmentationObjectID("[\w]*SM_DOME[\w]*", 35, True)  # sky
+        '''
 
     def read_camera_paths_from_disk(self, rotation_notation='quaternion'):
         camera_patches = {'rotation_notation': rotation_notation, 'patches': {}}
