@@ -126,9 +126,11 @@ public:
             else
                 return "";
         case msr::airlib::AirSimSettings::SegmentationSetting::MeshNamingMethodType::LabelName:
+#if WITH_EDITOR
             if (mesh->GetOwner())
                 return std::string(TCHAR_TO_UTF8(*(mesh->GetOwner()->GetActorLabel())));
             else
+#endif
                 return ""; //std::string(TCHAR_TO_UTF8(*(UKismetSystemLibrary::GetDisplayName(mesh))));
         default:
             return "";
