@@ -63,7 +63,7 @@ class Capture:
         found = self.client.simSetSegmentationObjectID("[\w]*Traffic[\w]*", 42, True)
 
         #### below set all mesh via owner->getActorLabel() ##########
-        # self.client.simSetMeshNamingMethodByString('label')
+        self.client.simSetMeshNamingMethodByString('label')
         found = self.client.simSetSegmentationObjectID("[\w]*Street_Furniture[\w]*", 2, True) # street furniture -> 12
         found = self.client.simSetSegmentationObjectID("[\w]*Sidewalk[\w]*", 2, True) # street furniture
         found = self.client.simSetSegmentationObjectID("[\w]*StartingArea[\w]*", 2, True) # street furniture
