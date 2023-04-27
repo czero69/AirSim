@@ -45,7 +45,7 @@ class Capture:
         self.client.simSetMeshNamingMethodByString('owner')
 
         # setting everything to black (unlabeled) first
-        found = self.client.simSetSegmentationObjectID("[\w]*", 0, True) # unlabelled
+        # found = self.client.simSetSegmentationObjectID("[\w]*", 0, True) # unlabelled
         # all far away buildings
         # found = self.client.simSetSegmentationObjectID("[\w]*HLOD[\w]*", 18, True) # building
         found = self.client.simSetSegmentationObjectID("[\w]*MASS[\w]*", 17,
@@ -80,6 +80,7 @@ class Capture:
         found = self.client.simSetSegmentationObjectID("[\w]*freeway[\w]*", 9, True) # infrastructure
         found = self.client.simSetSegmentationObjectID("[\w]*Billboard[\w]*", 37, True) # billboard and traffic signs
         found = self.client.simSetSegmentationObjectID("[\w]*water_plane[\w]*", 28, True) # water -> 10
+        '''
 
         #### Finally, set smaller granuality stencils by staticMesh ##########
         self.client.simSetMeshNamingMethodByString('mesh')
@@ -99,7 +100,6 @@ class Capture:
         found = self.client.simSetSegmentationObjectID("[\w]*wheel[\w]*", 42, True)
         found = self.client.simSetSegmentationObjectID("[\w]*EuropeanHorn[\w]*", 31, True) # vegetation, trees
         found = self.client.simSetSegmentationObjectID("[\w]*SM_DOME[\w]*", 35, True)  # sky
-        '''
 
     def read_camera_paths_from_disk(self, rotation_notation='quaternion'):
         camera_patches = {'rotation_notation': rotation_notation, 'patches': {}}

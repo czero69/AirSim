@@ -35,6 +35,7 @@ stencil_list = [
     {"regex": "*Truck*", "stencil_value": 42, "match_type": "actor_name"},  # vehicle
     {"regex": "*Traffic*", "stencil_value": 42, "match_type": "actor_name"},  # vehicle
 
+    {"regex": "*vehicle*", "stencil_value": 42, "match_type": "actor_label"},  # vehicle
     {"regex": "*bike*", "stencil_value": 2, "match_type": "actor_label"},   # street furniture
     {"regex": "*Barrier*", "stencil_value": 2, "match_type": "actor_label"},   # street furniture
     {"regex": "*Street_Furniture*", "stencil_value": 2, "match_type": "actor_label"},   # street furniture
@@ -53,12 +54,19 @@ stencil_list = [
     {"regex": "*UnderPass*", "stencil_value": 7, "match_type": "actor_label"},   # road
 
     {"regex": "*freeway*", "stencil_value": 9, "match_type": "actor_label"},   # infrastructure
+    {"regex": "*bridge*", "stencil_value": 9, "match_type": "actor_label"},   # infrastructure
 
     {"regex": "*Billboard*", "stencil_value": 37, "match_type": "actor_label"},   # billboard and traffic signs
 
     {"regex": "*water_plane*", "stencil_value": 28, "match_type": "actor_label"},   # water
 
+    {"regex": "*Wheel", "stencil_value": 42, "match_type": "actor_label"},   # vehicle
+    {"regex": "*Frame_Interior", "stencil_value": 42, "match_type": "actor_label"},   # vehicle
+    {"regex": "SM_Door_*", "stencil_value": 42, "match_type": "actor_label"},   # vehicle
+    {"regex": "*vehicle*", "stencil_value": 42, "match_type": "actor_label"},  # vehicle
 
+
+    {"regex": "*vehicle*", "stencil_value": 42, "match_type": "mesh_static"},  # vehicle
     {"regex": "*bench*", "stencil_value": 2, "match_type": "mesh_static"},   # street furniture
     {"regex": "*stairs*", "stencil_value": 2, "match_type": "mesh_static"},   # street furniture
     {"regex": "*lamp*", "stencil_value": 2, "match_type": "mesh_static"},   # street furniture
@@ -80,6 +88,7 @@ stencil_list = [
 
     {"regex": "*vehicle*", "stencil_value": 42, "match_type": "mesh_static"},   # vehicle
     {"regex": "*wheel*", "stencil_value": 42, "match_type": "mesh_static"},   # vehicle
+    {"regex": "*veh*", "stencil_value": 42, "match_type": "mesh_static"},   # vehicle
 
     {"regex": "*EuropeanHorn*", "stencil_value": 31, "match_type": "mesh_static"}, # vegetation, trees
 
@@ -113,7 +122,9 @@ def set_stencils_for_current_level():
 
             # Iterate through the list of regexes, stencil values, and match types
             for stencil in reversed(stencil_list):
-                if stencil["match_type"] == "mesh_static" and unreal.StringLibrary.matches_wildcard(mesh_static, stencil["regex"]):
+                if stencil["match_type"] == "mesh_static" and \
+                        (unreal.StringLibrary.matches_wildcard(mesh_static, stencil["regex"]) or
+                         unreal.StringLibrary.matches_wildcard(mesh_name, stencil["regex"])):
                     stencil_value = stencil["stencil_value"]
                     break
                 elif stencil["match_type"] == "mesh_name" and unreal.StringLibrary.matches_wildcard(mesh_name, stencil["regex"]):
@@ -134,10 +145,10 @@ def set_stencils_for_current_level():
 # set stencils for all sub-levels
 def iterate_levels_and_set_stencils():
     # alternative way of excluding things
-    '''
+
     exclusion_set = [unreal.TopLevelAssetPath("/Game/Building/map/Kit_Hero_Buildings"),
                      unreal.TopLevelAssetPath("/Game/Environment/Courtyard/Kit_courtyard_biomes")]
-    '''
+
 
     directory_paths = ["/Game/Environment/",
                        "/Game/Building/",
@@ -145,8 +156,8 @@ def iterate_levels_and_set_stencils():
 
     asset_registry = unreal.AssetRegistryHelpers.get_asset_registry()
 
-    path_filter = unreal.ARFilter(package_paths=directory_paths, recursive_paths=True)
-                                  #, recursive_class_paths_exclusion_set=exclusion_set)
+    path_filter = unreal.ARFilter(package_paths=directory_paths, recursive_paths=True,
+                                  recursive_class_paths_exclusion_set=exclusion_set)
 
     # get a list of asset data objects that match the filter
     asset_data_list = asset_registry.get_assets(path_filter)
@@ -157,11 +168,12 @@ def iterate_levels_and_set_stencils():
     for asset_data in asset_data_list:
         asset_type = asset_data.asset_class_path.asset_name
         asset_name = asset_data.asset_name
-        if "kit_" not in str(asset_name).lower():  # exclude all kits (redundant and faster loading)
+        if "thereisnospoon_" not in str(asset_name).lower():  # exclude all kits (redundant and faster loading)
             if asset_type == "World":
                 unreal.EditorLevelLibrary.load_level(asset_data.package_name)
                 set_stencils_for_current_level()
-                unreal.EditorLevelLibrary.save_current_level()
+                unreal.EditorLevelLibrary.save_all_dirty_levels()
+                # unreal.EditorLevelLibrary.save_current_level()
             elif asset_type == "Blueprint":
                 pass
             else:
@@ -172,12 +184,69 @@ def iterate_levels_and_set_stencils():
     print("excluded levels in the process:", excluded_list)
     print("finished processing")
 
-def main(is_current, is_sublevels):
+def make_update():
+    '''
+    An attempt to refresh stencils which are already applied to packedLevelActors but not applied to main scene
+    BigCity map.
+
+    I have tried it, but none of the below worked. After calling "sublevels" all level (PackedLevelActors) are indeed
+    modified, but this does not make effect on BigMap level. I tried the below to update it automatically but I does
+    not work. I have ended up By manualy in editor clicking on some packedLevelInstance, right click and (in context
+    menu)
+    clikcing: [tab] Actor Options -> [click] Level -> [click] Update Packed Level. Updade packed level did a job and
+    stencils are refreshed now.
+    When you update one instance, entire family of that kind is updated, so it was not that much work to update it
+    manually, spend one evening flying around the map and updating it. Some packedLevelActors got displaced after
+    this operation, but not that often.
+    Alternative way is clicking Level->Edit and saving it, this also updates it to BigMapCity.
+    '''
+
+    pass
+
+    # Get all PackagedLevelActors in the current level
+
+    '''
+    level_actors = unreal.EditorLevelLibrary.get_all_level_actors()
+    
+    # Loop through each PackagedLevelActor
+    for actor in level_actors:
+        # Check if the actor is a PackagedBlueprint
+        #if "BPP_" in actor.get_name():
+            #print("type(actor): ", type(actor))
+            #print("actor.get_class()", actor.get_class())
+            #print(actor.GetClass())
+            #print(actor.GetClass().GetName())
+        if isinstance(actor, unreal.PackedLevelActor):
+            # Get the asset path of the actor
+            actor_path = actor.get_path_name()
+
+            # Load the actor as a Blueprint asset
+            blueprint = unreal.EditorAssetLibrary.load_asset(actor_path)
+
+            #aes = unreal.AssetEditorSubsystem()
+
+            #unreal.AssetEditorSubsystem.open_editor_for_assets(aes, blueprint)
+
+            # Update the PackagedBlueprint
+            # unreal.EditorAssetLibrary.update_asset(blueprint)
+
+            # Save the changes to disk
+            unreal.EditorAssetLibrary.save_asset(blueprint)
+            break
+
+            # Unload the asset to free up memory
+            # unreal.EditorAssetLibrary.unload_asset(blueprint)
+            # break
+    '''
+
+def main(is_current, is_sublevels, is_update):
     # set stencils for all sublevels or for current level
     if is_sublevels:
         iterate_levels_and_set_stencils()
     if is_current:
         set_stencils_for_current_level()
+    if is_update:
+        make_update()
 
 if __name__ == '__main__':
     # create an argument parser
@@ -199,9 +268,12 @@ if __name__ == '__main__':
                                                                  'Note, that setting stencils for bigCity will not '
                                                                  'adjust stencils for sublevels, (PackagedLevelActor) '
                                                                  'as they are not loaded')
+    parser.add_argument('--update', action='store_true', help='try to update all sublevels (packageActorLevels) in the '
+                                                              'Main Level'
+                                                              'so the changes takes effect.')
 
     # parse the arguments
     args = parser.parse_args()
 
     # call the main function with the arguments
-    main(is_current=args.current, is_sublevels=args.sublevels)
+    main(is_current=args.current, is_sublevels=args.sublevels, is_update=args.update)
