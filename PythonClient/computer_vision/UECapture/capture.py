@@ -11,6 +11,8 @@ from typing import List
 import math
 from tqdm import tqdm
 import cv2
+import random
+import re
 from threading import Thread
 
 
@@ -20,11 +22,12 @@ class Capture:
         self.client = airsim.MultirotorClient()
         self.client.confirmConnection()
         # self.tmp_dir = os.path.join(tempfile.gettempdir(), "airsim_drone")
-        self.tmp_dir = 'D:/Kamil/data_collected/airsim_drone/'
+        self.tmp_dir = 'D:/Kamil/data_collected/airsim_drone/dataset_coffing'
         self.be_verbose = verbose
         self.save_dir = save_dir
         self.camera_paths_dir = camera_paths
         self.generate_camera_sample_dir = generate_camera_sample_dir
+        # random.seed(777) # non-deterministic
 
     def getPoseAndRotation(self):
         pose = self.client.simGetVehiclePose()
@@ -36,18 +39,20 @@ class Capture:
 
     def setSegmentationIDs(self):
 
-        #@todo as Label is not accessible in the packaged builds, move everything to unreal python script
-        # see AirSim\PythonClient\computer_vision\UECapture\set_stencils_from_editor.py how to run it from editor
-        # in editor, load level chunks from worldpartition and run for each chunk (as big as your RAM)
+        # before calling this, you should also set as many stencils as possible from the map itself
+        # see AirSim\PythonClient\computer_vision\UECapture\set_stencils_from_editor.py --current nad --sublevels
+        # run the above once with --sublevels from editor as python command then, in editor,
+        # load level chunks from worldpartition and run for each chunk (as big as your RAM, for me 1/4 BigMap worked)
+        # call above with --current. After that, you need to fly around map, spot some not updated stencils,
+        # revisit some packedActorLevels and reload them
+        # (right click) -> Actor Options -> Level -> Update Packed Level
 
-        #### first, set things by mesh->owner() ####
+
         # set all meshes which owner name is according to regexes
         self.client.simSetMeshNamingMethodByString('owner')
 
-        # setting everything to black (unlabeled) first
-        # found = self.client.simSetSegmentationObjectID("[\w]*", 0, True) # unlabelled
-        # all far away buildings
-        # found = self.client.simSetSegmentationObjectID("[\w]*HLOD[\w]*", 18, True) # building
+        found = self.client.simSetSegmentationObjectID("[\w]*HLOD[\w]*", 18, True)  # building
+        found = self.client.simSetSegmentationObjectID("[\w]*freeway[\w]*", 9, True)  # infrastructure
         found = self.client.simSetSegmentationObjectID("[\w]*MASS[\w]*", 17,
                                                        True)  # small humans and drivers, everything MASS not captured later
         found = self.client.simSetSegmentationObjectID("[\w]*CROWD[\w]*", 17, True)
@@ -62,8 +67,7 @@ class Capture:
         found = self.client.simSetSegmentationObjectID("[\w]*Truck[\w]*", 42, True)
         found = self.client.simSetSegmentationObjectID("[\w]*Traffic[\w]*", 42, True)
 
-        #### below set all mesh via owner->getActorLabel() ##########
-        # these are now set up in editor before map is packaged, see set_stencils_from_editor.py
+        # these are now set up in editor before map before it is packaged, see set_stencils_from_editor.py
         '''
         self.client.simSetMeshNamingMethodByString('label')
         found = self.client.simSetSegmentationObjectID("[\w]*Street_Furniture[\w]*", 2, True) # street furniture -> 12
@@ -82,8 +86,9 @@ class Capture:
         found = self.client.simSetSegmentationObjectID("[\w]*water_plane[\w]*", 28, True) # water -> 10
         '''
 
-        #### Finally, set smaller granuality stencils by staticMesh ##########
+        # just to make additional sure we set as much stencils as possible
         self.client.simSetMeshNamingMethodByString('mesh')
+        found = self.client.simSetSegmentationObjectID("[\w]*freeway[\w]*", 9, True)  # infrastructure
         found = self.client.simSetSegmentationObjectID("[\w]*bench[\w]*", 2, True)  # street furniture
         found = self.client.simSetSegmentationObjectID("[\w]*stairs[\w]*", 2, True)  # street furniture
         found = self.client.simSetSegmentationObjectID("[\w]*lamp[\w]*", 2, True)  # street furniture
@@ -259,48 +264,234 @@ class Capture:
 
         return ned_pos, ned_quat
 
-    def get_pose_from_camera_path(self, elapsed_simulation_time_msec, camera_path, camera_pathes, camera_time_list):
+    def get_pose_from_camera_path(self, elapsed_simulation_time_msec, camera_path, rotation_notation, camera_time_list):
         position_val, orientation_val = self.interpolate_position_and_rotation(elapsed_simulation_time_msec,
                                                                                camera_path,
-                                                                               camera_pathes[
-                                                                                   'rotation_notation'],
+                                                                               rotation_notation,
                                                                                camera_time_list)
         position_val, orientation_val = self.toNED(position_val, orientation_val)
-        position_val.z_val = position_val.z_val + 5.0  # @todo shift initial pos, orientat; add init pose support
+        # position_val.z_val = position_val.z_val + 5.0  # @todo shift initial pos, orientat; add init pose support
         pose = Pose(position_val=position_val, orientation_val=orientation_val)
         return pose
 
-    def move_camera(self, move_by_time_usec, elapsed_prev_simulation_time_usec, time_dilation, camera_path,
-                    camera_pathes, camera_time_list, sampling_rate=1.0):
+    def _grab_and_save_images_for_pose(self, pose, save_path_dir, save_img_id = 0, apply_unpause = False):
+        # save_path_dir = os.path.join(self.tmp_dir, path_name)
+        self.client.simPause(True)
+
+        if self.be_verbose:
+            self.getPoseAndRotation()
+
+        self.client.simPause(False)
+        self.client.simSetVehiclePose(pose, True)
+        time.sleep(self.get_target_simulation_time_step())
+        self.client.simPause(True)
+
+        responses = self.client.simGetImages([
+            ### airsim.ImageRequest("0", airsim.ImageType.Scene), # this is replaced by screenshots. Only for preview.
+            # airsim.ImageRequest("0", airsim.ImageType.Velocity, pixels_as_float=False, pixels_as_float_RGB=True, compress=False), # velocity buffer is captured earliel, as at this point it is erased because of client.simPause(True) @todo TEST NEW
+            airsim.ImageRequest("0", airsim.ImageType.SurfaceNormals, pixels_as_float=False, compress=False),
+            airsim.ImageRequest("0", airsim.ImageType.DepthPlanar, pixels_as_float=True, compress=False),
+            airsim.ImageRequest("0", airsim.ImageType.Segmentation, pixels_as_float=False, compress=False),
+            # airsim.ImageRequest("0", airsim.ImageType.ShaderID, pixels_as_float = False, compress = False),
+            ### probably very limited @todo, decide do we want it
+            ### airsim.ImageRequest("0", airsim.ImageType.TextureUV), # not yet supported
+            ### airsim.ImageRequest("0", airsim.ImageType.SceneDepth, pixels_as_float = True, compress = False), # same as airsim DepthPlanar, but depthplannar is scaled to 0..1
+            airsim.ImageRequest("0", airsim.ImageType.ReflectionVector, pixels_as_float=False, compress=False),
+            airsim.ImageRequest("0", airsim.ImageType.DotSurfaceReflection, pixels_as_float=False, compress=False),
+            airsim.ImageRequest("0", airsim.ImageType.Metallic, pixels_as_float=False, compress=False),
+            airsim.ImageRequest("0", airsim.ImageType.Albedo, pixels_as_float=False, compress=False),
+            airsim.ImageRequest("0", airsim.ImageType.Specular, pixels_as_float=False, compress=False),
+            airsim.ImageRequest("0", airsim.ImageType.Opacity, pixels_as_float=False, compress=False),
+            airsim.ImageRequest("0", airsim.ImageType.Roughness, pixels_as_float=False, compress=False),
+            ### airsim.ImageRequest("0", airsim.ImageType.Anisotropy), # no valuable info observed
+            ### airsim.ImageRequest("0", airsim.ImageType.AO), # no valuable info observed
+            airsim.ImageRequest("0", airsim.ImageType.ShadingModelColor, pixels_as_float=False,
+                                compress=False)])  # probably very limited @todo, decide do we want it
+
+        # add velocity buffer captured earlier
+        self.client.simPause(True)
+
+        save_screenshot_dir = os.path.join(save_path_dir, "screenshot")
+        if not os.path.exists(save_screenshot_dir):
+            os.makedirs(save_screenshot_dir)
+        # print(os.path.join(save_screenshot_dir.replace(os.sep, '/'), str(step_id).zfill(5) + '.png'))
+        success = self.client.simTakeScreenshot(
+            os.path.join(save_screenshot_dir.replace(os.sep, '/'), str(save_img_id).zfill(5) + '.png'))
+        if self.be_verbose:
+            print("image taken")
+        if self.be_verbose:
+            print("taking images")
+
+        ### responses.extend(responses_velocity) # @todo TEST NEW
+
+        for response in responses:
+            save_dir_per_response = os.path.join(save_path_dir, str(response.image_type))
+            if not os.path.exists(save_dir_per_response):
+                os.makedirs(save_dir_per_response)
+            if response.pixels_as_float:
+                # for some reason it is flipped vertically. Reflip it.
+                image_arr = airsim.get_pfm_array(response)
+                image_arr = np.flip(image_arr, axis=0)  # need for depth buffer
+                airsim.write_pfm(os.path.normpath(os.path.join(save_dir_per_response, str(save_img_id).zfill(5) + '.pfm')),
+                                 image_arr)
+            elif response.pixels_as_float_RGB:
+                img1d = np.array(response.image_data_float_RGB, dtype=np.float)
+                im = img1d.reshape(response.height, response.width, 3)
+                im_no_alpha = im[:, :, :3]
+
+                last_delta_usecs = self.client.simGetDeltaTime() * (1 / self.get_time_dilation()) * 1000000
+                # velocity needs to support -2..2 screen space range for x and y
+                # for visualization purposes:
+                im_no_alpha -= 0.5
+                im_no_alpha /= 0.5
+                im_no_alpha = im_no_alpha * np.sqrt(self.get_targeted_time_step_usec() / (last_delta_usecs *
+                                                                               self.get_time_dilation()))
+                im_no_alpha *= 0.5
+                im_no_alpha += 0.5
+
+                # filename = os.path.normpath(os.path.join(save_dir, str(step_id).zfill(5) + '.npy'))
+                # np.save(filename, im_no_alpha) #@todo unlock it later with switch
+
+                im_no_alpha = im_no_alpha * 255
+                im_no_alpha = np.clip(im_no_alpha, 0, 255)
+                im_no_alpha = im_no_alpha.astype('uint8')
+                cv2.imwrite(os.path.normpath(os.path.join(save_dir_per_response, str(save_img_id).zfill(5) + '_visualization.png')),
+                            im_no_alpha)
+            else:
+
+                # Change images into numpy arrays.
+                img1d = np.fromstring(response.image_data_uint8, dtype=np.uint8)
+                im = img1d.reshape(response.height, response.width, 3)
+                im_no_alpha = im[:, :, :3]
+                cv2.imwrite(os.path.normpath(os.path.join(save_dir_per_response, str(save_img_id).zfill(5) + '.png')), im_no_alpha)
+
+        if apply_unpause:
+            self.client.simPause(False)
+
+    def iterate_all_camera_patches(self, camera_pathes):
+        for path_name, camera_path in camera_pathes['patches'].items():
+            self.client.simPause(True)
+            camera_time_list = []
+            for step_id, coords in enumerate(camera_path):
+                elapsed_camera_paths_time_msec = coords[-1]
+                camera_time_list.append(elapsed_camera_paths_time_msec)
+            total_steps = camera_time_list[-1] // self.get_targeted_time_step_usec()
+            for step_id in tqdm(range(int(total_steps))):
+                elapsed_simulation_time_usec_now = int(self.get_targeted_time_step_usec() * step_id)
+                pose_now = self.get_pose_from_camera_path(elapsed_simulation_time_usec_now, camera_path, camera_pathes[
+                                                                                   'rotation_notation'],
+                                               camera_time_list)
+                if self.be_verbose:
+                    self.getPoseAndRotation()
+
+                save_path_dir = os.path.join(self.tmp_dir, path_name)
+                self._grab_and_save_images_for_pose(pose=pose_now, save_path_dir=save_path_dir, save_img_id=step_id,
+                                                    apply_unpause=False)
+        self.client.simPause(False)  # leave demo unpaused
+
+    def _get_next_sample_dir_name(self, pattern=r"sample\d{5}$"):
+
+        if not os.path.isdir(os.path.join(self.tmp_dir)):
+            os.makedirs(self.tmp_dir)
+
+        # Get a list of all directories in self.tmp_dir that match the pattern
+        dir_list = [d for d in os.listdir(self.tmp_dir) if
+                    os.path.isdir(os.path.join(self.tmp_dir, d)) and re.match(pattern, d)]
+
+        if dir_list:
+            # Extract the number from the directory names and convert to integers
+            num_list = [int(d[6:]) for d in dir_list]
+
+            # Find the largest number in the list
+            max_num = max(num_list)
+        else:
+            max_num = -1
+
+        # Create the name of the new directory
+        new_dir_name = f"sample{max_num + 1:05d}"
+
+        return new_dir_name
+
+
+    def save_random_movement_sample(self, camera_pathes, frame_num_to_save = 5, player_pose=None):
         '''
-        moving camera by specified amount of time
-        Args:
-            move_by_time_usec:
-            elapsed_prev_simulation_time_usec: time that has passed previously
-            sampling_rate: how often do you want to 'jump' the camera around per real render time (fps in ue5).
-
-        Returns:
-
+        randomize part of camera patch (cut small movement trace/path), move along it, and save N frames
+        camera_pathes - camera_pathes allowed to random from patch
+        pose - pose at which you want to start movement and save; if None, current camera/veh pose will be taken
         '''
 
-        total_time_passed_usec = 0
-        cunt = 0
-        recent_u5_delta_us = self.client.simGetDeltaTime() * 1000000
-        current_delta_us = recent_u5_delta_us / sampling_rate
-        while(total_time_passed_usec < move_by_time_usec - current_delta_us):
-            cunt += 1
-            recent_u5_delta_us = self.client.simGetDeltaTime() * 1000000 # * (1 / time_dilation) # (1 / time_dilation)
-            # recent_u5_delta_us_simulation = recent_u5_delta_us * (1 / time_dilation)
-            current_delta_us = recent_u5_delta_us / sampling_rate
-            total_time_passed_usec += current_delta_us
-            elapsed_simulation_time_usec_now = elapsed_prev_simulation_time_usec + total_time_passed_usec
-            if self.be_verbose:
-                print("current_delta_us: ", current_delta_us)
-                print("elapsed_simulation_time_usec_now:", elapsed_simulation_time_usec_now)
-            pose_now = self.get_pose_from_camera_path(elapsed_simulation_time_usec_now, camera_path, camera_pathes,
-                                                      camera_time_list)
-            time.sleep(current_delta_us / 1000000)  # iterate simulation
-            self.client.simSetVehiclePose(pose_now, True)
+        self.client.simPause(True)
+
+        next_dir_name = self._get_next_sample_dir_name()
+
+        if player_pose is None:
+            player_pose = self.client.simGetVehiclePose()
+
+        path_name, camera_path = random.choice(list(camera_pathes['patches'].items()))
+        camera_time_list = []
+
+        print("path_name", path_name)
+        print("camera_path[-1]", camera_path[-1])
+        print("camera_path[0]", camera_path[0])
+
+        # populate camera time list (last coord parameter)
+        for step_id, coords in enumerate(camera_path):
+            elapsed_camera_paths_time_msec = coords[-1]
+            camera_time_list.append(elapsed_camera_paths_time_msec)
+
+        print("camera_time_list:", camera_time_list[-1])
+        print("get_targeted_time_step_usec:", self.get_targeted_time_step_usec())
+        # total possible steps, divide camera list last time point by time step duration in simulator (all in usecs)
+        total_steps = camera_time_list[-1] // self.get_targeted_time_step_usec()
+
+        # radnomize starting point in the particular camera path
+        start = random.randint(0, min(0, int(total_steps) - frame_num_to_save))
+
+        for step_id in tqdm(range(start, start + frame_num_to_save)):
+            elapsed_simulation_time_usec_now = int(self.get_targeted_time_step_usec() * step_id)
+            camera_pose = self.get_pose_from_camera_path(elapsed_simulation_time_usec_now, camera_path, camera_pathes[
+                                                                               'rotation_notation'],
+                                           camera_time_list)
+
+            if step_id == start:
+                new_xyz = player_pose.position
+                new_orientation = player_pose.orientation
+                # init cam_zero_pose, cam_zero_orientatio
+                cam_zero_pose, cam_zero_orientation = camera_pose.position, camera_pose.orientation
+                cam_zero_orientation_inverted = cam_zero_orientation.inverse()
+            else:
+                new_xyz = player_pose.position + (camera_pose.position - cam_zero_pose)
+                # new_orientation = camera_pose.orientation * pose.orientation  # @todo ,non cummutative op
+                q1 = cam_zero_orientation_inverted * camera_pose.orientation
+                new_orientation = q1 * player_pose.orientation
+
+            #new_xyz = pose.position + camera_pose.position
+            #new_orientation = pose.orientation * camera_pose.orientation
+
+            new_pose = Pose(position_val=new_xyz, orientation_val=new_orientation)
+
+            save_path_dir = os.path.join(self.tmp_dir, next_dir_name)
+            self._grab_and_save_images_for_pose(pose=new_pose, save_path_dir=save_path_dir, save_img_id=step_id-start,
+                                                apply_unpause=False)
+        self.client.simPause(False)  # leave demo unpaused
+
+    def set_targeted_time_step_usec(self, targeted_time_step_usec):
+        self._targeted_time_step_usec = targeted_time_step_usec
+
+    def get_targeted_time_step_usec(self):
+        return self._targeted_time_step_usec
+
+    def set_time_dilation(self, time_dilation):
+        self._time_dilation = time_dilation
+
+    def get_time_dilation(self):
+        return self._time_dilation
+
+    def set_target_simulation_time_step(self, target_simulation_time_step):
+        self._target_simulation_time_step = target_simulation_time_step
+
+    def get_target_simulation_time_step(self):
+        return self._target_simulation_time_step
 
     def record(self, camera_pathes=None, time_dilation=0.01, target_fps=60):
         '''
@@ -320,6 +511,10 @@ class Capture:
         target_simulation_time_step_usec = target_simulation_time_step * 1000000  # as above, but in micro seconds (10^-6)
         targeted_time_step_usec = (1 / target_fps) * 1000000 # how much time is passing in real time (in micro seconds)
 
+        self.set_targeted_time_step_usec(targeted_time_step_usec)
+        self.set_time_dilation(time_dilation)
+        self.set_target_simulation_time_step(target_simulation_time_step)
+
         self.client.simSetGameSpeed(time_dilation)  # dont call simSetGameSpeed often and with zero values,
         # I have observed it can break wheels in UE5 CitySample demo
 
@@ -331,224 +526,7 @@ class Capture:
         else:
             camera_pathes = self.read_camera_paths_from_disk()
 
-        # @todo add camera_patches supprot - for now, simple demo
+        self.save_random_movement_sample(camera_pathes=camera_pathes)
+        # self.iterate_all_camera_patches(camera_pathes=camera_pathes)
+        self.client.simSetGameSpeed(2.0)
 
-        for path_name, camera_path in camera_pathes['patches'].items():
-            # self.client.simPause(False)  # after moving to new location, rebuild Lumen and others for a longer time
-            # time.sleep(7.0)
-            self.client.simPause(True)
-            camera_time_list = []  # msecs time lists from recorded camera
-            for step_id, coords in enumerate(camera_path):
-                elapsed_camera_paths_time_msec = coords[-1]
-                camera_time_list.append(elapsed_camera_paths_time_msec)
-            total_steps = camera_time_list[-1] // targeted_time_step_usec
-            ### estimated_safe_sleep_time = 2  # in secs # @todo SafeSleepTime
-            for step_id in tqdm(range(int(total_steps))):
-                # create a thread
-                elapsed_simulation_time_usec_now = int(targeted_time_step_usec * step_id)
-                #thread = Thread(target=self.move_camera, args=(targeted_time_step_usec,
-                #                                               int(targeted_time_step_usec * (step_id - 1)), time_dilation
-                #                                               , camera_path, camera_pathes, camera_time_list))
-                last_delta_usecs = self.client.simGetDeltaTime() * (1/time_dilation) * 1000000
-                elapsed_simulation_time_usec_prev_step = int(elapsed_simulation_time_usec_now - \
-                                                             32 * (np.sqrt(last_delta_usecs * time_dilation)))  # time_dilation
-                #elapsed_simulation_time_usec_prev_step = int(elapsed_simulation_time_usec_now - \
-                  #                                        1.0 * last_delta_usecs * time_dilation) # time_dilation
-                #elapsed_simulation_time_usec_prev_step = int(elapsed_simulation_time_usec_now - \
-                  #                                        1.0 * targeted_time_step_usec) # time_dilation
-                #if self.be_verbose:
-                #    print("last_delta_usecs: ", last_delta_usecs)
-                #    print("elapsed time now/prev:", elapsed_simulation_time_usec_now, elapsed_simulation_time_usec_prev_step)
-                pose_now = self.get_pose_from_camera_path(elapsed_simulation_time_usec_now, camera_path, camera_pathes,
-                                               camera_time_list)
-                # so the jump from pose_prev to pose_now takes into consideration how much did we slowed things down
-                # by 'time_dilation'
-                pose_prev = self.get_pose_from_camera_path(elapsed_simulation_time_usec_prev_step, camera_path, camera_pathes,
-                                               camera_time_list)
-                if self.be_verbose:
-                    self.getPoseAndRotation()
-
-                # self.client.simSetGameSpeed(time_dilation) # @todo TEST NEW
-                ### time.sleep(1)  # @todo TEST NEW
-                time_before_pause = time.time()
-                self.client.simPause(False)
-                ### self.client.simSetVehiclePose(pose_prev, True) # pose_prev # @todo TEST NEW
-                self.client.simSetVehiclePose(pose_now, True)
-                ## thread.start()
-                time.sleep(target_simulation_time_step)  # @todo TEST NEW iterate simulation
-                ###if (estimated_safe_sleep_time > 0):
-                ###    time.sleep(estimated_safe_sleep_time) # sleep some amount of time,
-                                                              # so the light rebuilds after camera movement, but less than
-                                                              # target_simulation_time_step, so in case now elapsed time is shorter,
-                                                              # we still have some time left
-                ## thread.join()
-                ### self.client.simSetVehiclePose(pose_now, True) # @todo TEST NEW
-                # get velocity buffers before calling simPause. SimPause will erase velocity buffer.
-                '''
-                responses_velocity = self.client.simGetImages([
-                    airsim.ImageRequest("0", airsim.ImageType.Velocity, pixels_as_float=False, pixels_as_float_RGB=True,
-                                        compress=False)]) # @todo CHECK
-                end = time.time()
-                print("time responses_velocity ms:", (end - start) * 1000)
-                '''
-                #self.client.simSetGameSpeed(0.0) # @todo TEST NEW
-                ### time.sleep(1.5) # @todo TEST NEW
-                self.client.simPause(True) # @todo NO PAUSE? NEW
-                # time.sleep(2)  # @todo, does it help here (?)
-
-                '''
-                save_screenshot_dir = os.path.join(self.tmp_dir, path_name, "screenshot")
-                if not os.path.exists(save_screenshot_dir):
-                    os.makedirs(save_screenshot_dir)
-                # print(os.path.join(save_screenshot_dir.replace(os.sep, '/'), str(step_id).zfill(5) + '.png'))
-                success = self.client.simTakeScreenshot(
-                    os.path.join(save_screenshot_dir.replace(os.sep, '/'), str(step_id).zfill(5) + '.png'))
-                if self.be_verbose:
-                    print("image taken")
-                if self.be_verbose:
-                    print("taking images")
-                '''
-
-                #responses_velocity = self.client.simGetImages([
-                #    airsim.ImageRequest("0", airsim.ImageType.Velocity, pixels_as_float=False, pixels_as_float_RGB=True,
-                #                        compress=False)])  # @todo CHECK
-
-                '''
-                time_after_pause = time.time()
-                last_sleep_time_sec = time_after_pause - time_before_pause
-                remaining_sleep_time_sec = target_simulation_time_step - last_sleep_time_sec
-                estimated_safe_sleep_time = (remaining_sleep_time_sec + estimated_safe_sleep_time)*0.8
-                if(remaining_sleep_time_sec > 0):
-                    time.sleep(remaining_sleep_time_sec)
-                else:
-                    print("taking buffers takes longer time needed to run demo for desired FPS. "
-                          "Consider slowing the UE5 game speed even further. "
-                          "Please set time_dilation parameter for smaller value.")
-                    print("time target_simulation_time_step True ms:", (target_simulation_time_step) * 1000)
-                    print("time last_sleep_time_sec ms:", (last_sleep_time_sec) * 1000)
-                    print("time remaining_sleep_time_sec True ms:", (remaining_sleep_time_sec) * 1000)
-                    print("time estimated_safe_sleep_time True ms:", (estimated_safe_sleep_time) * 1000)
-                self.client.simPause(True)
-                '''
-
-                responses = self.client.simGetImages([
-                    ### airsim.ImageRequest("0", airsim.ImageType.Scene), # this is replaced by screenshots. Only for preview.
-                    airsim.ImageRequest("0", airsim.ImageType.Velocity, pixels_as_float=False, pixels_as_float_RGB=True, compress=False), # velocity buffer is captured earliel, as at this point it is erased because of client.simPause(True) @todo TEST NEW
-                    airsim.ImageRequest("0", airsim.ImageType.SurfaceNormals, pixels_as_float = False, compress = False),
-                    airsim.ImageRequest("0", airsim.ImageType.DepthPlanar, pixels_as_float=True, compress=False),
-                    airsim.ImageRequest("0", airsim.ImageType.Segmentation, pixels_as_float = False, compress = False),
-                    airsim.ImageRequest("0", airsim.ImageType.ShaderID, pixels_as_float = False, compress = False),
-                    ### probably very limited @todo, decide do we want it
-                    ### airsim.ImageRequest("0", airsim.ImageType.TextureUV), # not yet supported
-                    ### airsim.ImageRequest("0", airsim.ImageType.SceneDepth, pixels_as_float = True, compress = False), # same as airsim DepthPlanar, but depthplannar is scaled to 0..1
-                    airsim.ImageRequest("0", airsim.ImageType.ReflectionVector, pixels_as_float = False, compress = False),
-                    airsim.ImageRequest("0", airsim.ImageType.DotSurfaceReflection, pixels_as_float = False, compress = False),
-                    airsim.ImageRequest("0", airsim.ImageType.Metallic, pixels_as_float = False, compress = False),
-                    airsim.ImageRequest("0", airsim.ImageType.Albedo, pixels_as_float = False, compress = False),
-                    airsim.ImageRequest("0", airsim.ImageType.Specular, pixels_as_float = False, compress = False),
-                    airsim.ImageRequest("0", airsim.ImageType.Opacity, pixels_as_float = False, compress = False),
-                    airsim.ImageRequest("0", airsim.ImageType.Roughness, pixels_as_float = False, compress = False),
-                    ### airsim.ImageRequest("0", airsim.ImageType.Anisotropy), # no valuable info observed
-                    ### airsim.ImageRequest("0", airsim.ImageType.AO), # no valuable info observed
-                    airsim.ImageRequest("0", airsim.ImageType.ShadingModelColor, pixels_as_float = False, compress = False)])  # probably very limited @todo, decide do we want it
-
-                # add velocity buffer captured earlier
-                self.client.simPause(True)
-
-                save_screenshot_dir = os.path.join(self.tmp_dir, path_name, "screenshot")
-                if not os.path.exists(save_screenshot_dir):
-                    os.makedirs(save_screenshot_dir)
-                # print(os.path.join(save_screenshot_dir.replace(os.sep, '/'), str(step_id).zfill(5) + '.png'))
-                success = self.client.simTakeScreenshot(
-                    os.path.join(save_screenshot_dir.replace(os.sep, '/'), str(step_id).zfill(5) + '.png'))
-                if self.be_verbose:
-                    print("image taken")
-                if self.be_verbose:
-                    print("taking images")
-
-                ### responses.extend(responses_velocity) # @todo TEST NEW
-
-                for response in responses:
-                    save_dir = os.path.join(self.tmp_dir, path_name, str(response.image_type))
-                    if not os.path.exists(save_dir):
-                        os.makedirs(save_dir)
-                    if response.pixels_as_float:
-                        # if self.be_verbose:
-                        #    print("Type %d, size %d, pos %s" % (
-                        #        response.image_type, len(response.image_data_float), pprint.pformat(response.camera_position)))
-                        # for some reason it is flipped vertically. Reflip it.
-                        image_arr = airsim.get_pfm_array(response)
-                        image_arr = np.flip(image_arr, axis=0) # need for depth buffer
-                        airsim.write_pfm(os.path.normpath(os.path.join(save_dir, str(step_id).zfill(5) + '.pfm')),
-                                         image_arr)
-                    elif response.pixels_as_float_RGB:
-                        # so far this data type is only used for velocity buffer
-                        # Change images into numpy arrays.
-                        img1d = np.array(response.image_data_float_RGB, dtype=np.float)
-                        # img1d = np.frombuffer(response.image_data_uint8, dtype=np.uint8)
-                        im = img1d.reshape(response.height, response.width, 3)
-                        im_no_alpha = im[:, :, :3]
-                        # standarize to selected fps number instead of what fps game engine is rendering
-                        # current velocity buffer matches last_delta_usecs (what fps ue has rendered)
-                        # we are targeting targeted_time_step_usec (1 / target_fps) * 10^6
-                        # im_no_alpha --> last_delta_usecs
-
-                        im_no_alpha -= 0.5
-                        im_no_alpha /= 0.5
-                        im_no_alpha = im_no_alpha * np.sqrt(targeted_time_step_usec / (last_delta_usecs * time_dilation)) # # @todo time_dilation added / not certain is it correct
-                        # im_no_alpha *= 3 # time_dilation=0.00167 intead of 0.01 @todo remove this calc from UE shader
-                        # im_no_alpha = im_no_alpha * (last_delta_usecs * time_dilation / (targeted_time_step_usec))
-                        # im_no_alpha *= 1.0 # 20 # empower signal so it looks good in RGB range
-                        im_no_alpha *= 0.5
-                        im_no_alpha += 0.5
-
-
-
-                        filename = os.path.normpath(os.path.join(save_dir, str(step_id).zfill(5) + '.npy'))
-                        ##### np.save(filename, im_no_alpha) #@todo unlock it later with switch
-
-                        # velocity needs to support -2..2 screen space range for x and y
-                        # for visualization purposes:
-                        '''
-                        im_no_alpha -= 0.5
-                        im_no_alpha /= 0.5
-                        im_no_alpha *= 1.0
-                        im_no_alpha *= 0.5
-                        im_no_alpha += 0.5
-                        '''
-
-                        im_no_alpha = im_no_alpha*255
-                        im_no_alpha = np.clip(im_no_alpha, 0, 255)
-                        im_no_alpha = im_no_alpha.astype('uint8')
-                        cv2.imwrite(os.path.normpath(os.path.join(save_dir, str(step_id).zfill(5) + '_visualization.png')),
-                                   im_no_alpha)
-                    else:
-                        # if self.be_verbose:
-                        #    print("Type %d, size %d, pos %s" % (
-                        #        response.image_type, len(response.image_data_uint8), pprint.pformat(response.camera_position)))
-
-                        # for compressed
-                        #airsim.write_file(os.path.normpath(os.path.join(save_dir, str(step_id).zfill(5) + '.png')),
-                        #                  response.image_data_uint8)
-
-
-                        # Change images into numpy arrays.
-                        img1d = np.fromstring(response.image_data_uint8, dtype=np.uint8)
-                        # img1d = np.frombuffer(response.image_data_uint8, dtype=np.uint8)
-                        im = img1d.reshape(response.height, response.width, 3)
-                        im_no_alpha = im[:,:,:3]
-                        cv2.imwrite(os.path.normpath(os.path.join(save_dir, str(step_id).zfill(5) + '.png')), im_no_alpha)
-
-                '''
-                save_screenshot_dir = os.path.join(self.tmp_dir, path_name, "screenshot")
-                if not os.path.exists(save_screenshot_dir):
-                    os.makedirs(save_screenshot_dir)
-                print(os.path.join(save_screenshot_dir.replace(os.sep, '/'), str(step_id).zfill(5) + '.png'))
-                success = self.client.simTakeScreenshot(
-                    os.path.join(save_screenshot_dir.replace(os.sep, '/'), str(step_id).zfill(5) + '.png'))
-                if self.be_verbose:
-                    print("image taken")
-                '''
-
-
-        self.client.simPause(False)  # leave demo unpaused
