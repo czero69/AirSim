@@ -413,7 +413,7 @@ class Capture:
         return new_dir_name
 
 
-    def save_random_movement_sample(self, camera_pathes, frame_num_to_save = 5, player_pose=None):
+    def save_random_movement_sample(self, camera_pathes, frame_num_to_save = 10, player_pose=None):
         '''
         randomize part of camera patch (cut small movement trace/path), move along it, and save N frames
         camera_pathes - camera_pathes allowed to random from patch
@@ -431,21 +431,19 @@ class Capture:
         camera_time_list = []
 
         print("path_name", path_name)
-        print("camera_path[-1]", camera_path[-1])
-        print("camera_path[0]", camera_path[0])
 
         # populate camera time list (last coord parameter)
         for step_id, coords in enumerate(camera_path):
             elapsed_camera_paths_time_msec = coords[-1]
             camera_time_list.append(elapsed_camera_paths_time_msec)
 
-        print("camera_time_list:", camera_time_list[-1])
-        print("get_targeted_time_step_usec:", self.get_targeted_time_step_usec())
         # total possible steps, divide camera list last time point by time step duration in simulator (all in usecs)
         total_steps = camera_time_list[-1] // self.get_targeted_time_step_usec()
 
         # radnomize starting point in the particular camera path
-        start = random.randint(0, min(0, int(total_steps) - frame_num_to_save))
+        start = random.randint(0, max(0, int(total_steps) - frame_num_to_save))
+
+        print("start:", start)
 
         for step_id in tqdm(range(start, start + frame_num_to_save)):
             elapsed_simulation_time_usec_now = int(self.get_targeted_time_step_usec() * step_id)
@@ -528,5 +526,5 @@ class Capture:
 
         self.save_random_movement_sample(camera_pathes=camera_pathes)
         # self.iterate_all_camera_patches(camera_pathes=camera_pathes)
-        self.client.simSetGameSpeed(2.0)
+        self.client.simSetGameSpeed(1.0)
 

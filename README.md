@@ -8,6 +8,8 @@ Airsim limitations in UE5:
 
 I am using this project to record data (Images, Gbuffers, ...) in Unreal Engine 5 demo for machine learning project.
 
+:dvd: [Download example samples](https://drive.google.com/file/d/1sVwTJhNWSzcWlO9Hvi6p_RlbyFTMe6X6/view?usp=sharing)
+
 ## Install Visual Studio and tools.
 
 My stack:

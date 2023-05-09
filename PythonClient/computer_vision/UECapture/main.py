@@ -29,7 +29,7 @@ if __name__ == "__main__":
         "--camera_paths_dir",
         type=str,
         help="folder with camera paths/movements files",
-        default="./camera_paths/slow_walking_1/",
+        default="./camera_paths/slow_walking_1/quest2_recording_3rd",
     )
     parser.add_argument(
         "--save_dir",
