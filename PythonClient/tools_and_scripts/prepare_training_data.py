@@ -6,6 +6,10 @@ from pathlib import Path
 import numpy as np
 import struct
 import csv
+from tqdm import tqdm
+
+import multiprocessing as mp
+from functools import partial
 
 def get_total_screenfiles(dir):
     count = 0
@@ -95,26 +99,18 @@ def read_pfm(filename):
         shape = (height, width, 3) if channels == 3 else (height, width)
         return np.flipud(np.reshape(decoded, shape)) * scale
 
+def make_numpy_npz(input_dir, output_dir, target_type=np.float16, inspect=False, dry_run=False):
 
-def make_numpy_npz(input_dir, output_dir):
-    screenshot_w = 3840
-    screenshot_h = 2160
+    buffers_of_interest_255rgb = ['1', '6', '14', '15', '16', '17', '18', '19', '20', '23'] # '10', '5'
 
-    repeats_count = 5
-
-    buffers_of_interest_255rgb = ['1', '14', '6', '15', '16', '17', '18', '19', '20', '23'] # '5', '10'
+    # buffers that are gray channel only except depth (but they are saved as 24 bit depth now)
+    gray_buffers = ['15', '16', '18', '19', '20']
 
     # buffers_of_interest_255rgb = ['14']
 
     rootdir = input_dir
 
-    total_files = get_total_screenfiles(rootdir)
-    print("total files:", total_files)
-    # total_files = 2240
-    files_per_buffer = total_files // len(buffers_of_interest_255rgb)
-
-    # rootdir = os.fsencode(rootdir)
-    for parent_dir in os.listdir(rootdir):
+    for parent_dir in tqdm(os.listdir(rootdir)):
         # filename = os.fsdecode(file)
         parent_dir_path = os.path.join(rootdir, parent_dir)
         if (os.path.isdir(parent_dir_path)):
@@ -123,18 +119,21 @@ def make_numpy_npz(input_dir, output_dir):
                 for file in os.listdir(screenshot_dir_path):
                     if file.endswith('.png' or '.PFM'):
                         concatenated_array = None
-                        for current_buffer in buffers_of_interest_255rgb:
-                            if current_buffer == '10':
+                        for current_buffer_id in buffers_of_interest_255rgb:
+                            if current_buffer_id == '10':
                                 file_to_pick = os.path.splitext(file)[0] + "_visualization" + ".png"
-                            elif current_buffer == '1':
+                            elif current_buffer_id == '1':
                                 file_to_pick = os.path.splitext(file)[0] + ".pfm"
                             else:
                                 file_to_pick = file
                             file_to_read_path = os.path.join(parent_dir_path,
-                                                              current_buffer, file_to_pick)
-                            if current_buffer == '1':
+                                                              current_buffer_id, file_to_pick)
+                            if current_buffer_id == '1':
                                 # depth
                                 img_buff = read_pfm(file_to_read_path)
+
+                                # normalize it so max value is close to 1
+                                img_buff /= 20000
 
                                 # render it like that to rgb
                                 '''
@@ -147,29 +146,117 @@ def make_numpy_npz(input_dir, output_dir):
                                 output_file_path = os.path.join(output_dir, parent_dir, "tescik", file)
                                 cv2.imwrite(output_file_path, img_buff)
                                 '''
-                            elif current_buffer == '10':
-                                #@TODO
+                            elif current_buffer_id == '10':
+                                #@TODO - not supported now
                                 pass
                             else:
                                 img_buff = cv2.imread(file_to_read_path)
+                                # normalize it. All buffers here should be 0..255 before normalization
+                                img_buff = img_buff.astype(target_type)
+                                img_buff /= 255
                             # img_buff = cv2.resize(img_buff, (screenshot_w, screenshot_h))
-                            # concatenate to one npz file
-                            if(len(img_buff.shape) == 2):
+
+                            if inspect:
+                                # @todo this are after normalization stats
+                                # Print the array's shape, minimum value, maximum value, mean, standard deviation, and data type
+                                print("filename: ", file_to_read_path)
+                                print("current_buffer_id: ", current_buffer_id)
+                                print("Shape:", img_buff.shape)
+                                print("Minimum value:", np.min(img_buff))
+                                print("Maximum value:", np.max(img_buff))
+                                print("Mean:", np.mean(img_buff))
+                                print("Standard deviation:", np.std(img_buff))
+                                print("Data type:", img_buff.dtype)
+                                print("--------------------------------------")
+
+                            if current_buffer_id in gray_buffers:
+                                # Convert to a one-channel grayscale image
+                                img_buff = img_buff[..., 0]
+
+                            if len(img_buff.shape) == 2:
                                 img_buff = np.expand_dims(img_buff, axis=-1)
 
-                            if concatenated_array is None:
-                                concatenated_array = img_buff
-                            else:
-                                concatenated_array = np.concatenate((concatenated_array, img_buff), axis=-1)
+                            concatenated_array = img_buff.astype(target_type) if concatenated_array is None \
+                                else np.concatenate(
+                                (concatenated_array, img_buff.astype(target_type)), axis=-1)
 
-                        os.makedirs(os.path.join(output_dir, parent_dir, "NPZs"), exist_ok=True)
-                        filename_to_save = os.path.splitext(file)[0] + ".npz"
-                        output_file_path = os.path.join(output_dir, parent_dir, "NPZs", filename_to_save)
-                        # cv2.imwrite(output_file_path, img_buff)
-                        np.savez(output_file_path, concatenated_array)
-                        #np.savez_compressed(args.out_dir / f'{batch.path[0].stem}', data=f)
+                        if not dry_run:
+                            os.makedirs(os.path.join(output_dir, parent_dir, "NPZs"), exist_ok=True)
+                            filename_to_save = os.path.splitext(file)[0] + ".npz"
+                            output_file_path = os.path.join(output_dir, parent_dir, "NPZs", filename_to_save)
+                            np.savez(output_file_path, data=concatenated_array)
+
+def _get_color_list_for_stencils_transforms():
+    # transforms from my samples (list1) to epe format (list2)
+
+    list1, list2 = [], []
+    # undefined (mostly street furniture)
+    list1.append((255, 255, 255))
+    list2.append((5, 5, 5))
+    list1.append((0, 0, 0))
+    list2.append((0, 0, 0))
+
+    # buildings
+    list1.append((121, 67, 28))
+    list2.append((4, 4, 4))
+
+    # sky
+    list1.append((90, 162, 242))
+    list2.append((23, 23, 23))
+
+    # street furniture
+    list1.append((112, 105, 191))
+    list2.append((17, 17, 17))
+
+    # cars
+    list1.append((92, 31, 106))
+    list2.append((26, 26, 26))
+
+    # persons
+    list1.append((196, 30, 8))
+    list2.append((24, 24, 24))
+
+    # lights and traffic lights
+    list1.append((195, 237, 132))
+    list2.append((19, 19, 19))
+
+    # signs / traffic signs, bliboard
+    list1.append((254, 12, 229))
+    list2.append((20, 20, 20))
+
+    # road
+    list1.append((115, 176, 195))
+    list2.append((6, 6, 6))
+
+    # trees
+    list1.append((19, 132, 69))
+    list2.append((21, 21, 21))
+
+    # freewway
+    list1.append((135, 169, 180))
+    list2.append((7, 7, 7))
+
+    # terrain
+    list1.append((220, 163, 49))
+    list2.append((22, 22, 22))
+
+    # water
+    list1.append((54, 72, 205))
+    list2.append((1, 1, 1))
+
+    return list1, list2
+
+def process_tile(img_buff, list1, list2, tile_size, modify_image, tile_index):
+    i, j = tile_index
+    tile = img_buff[i:i+tile_size, j:j+tile_size]
+    modify_image(tile, list1, list2)
+    return tile, tile_index
 
 def stencil_rgb_to_gray(input_dir, output_dir):
+    # pip install Cython
+    # python setup_epe_stencils_cython.py build_ext --inplace
+    from get_epe_stencils import modify_image
+
     screenshot_w = 3840
     screenshot_h = 2160
 
@@ -177,43 +264,69 @@ def stencil_rgb_to_gray(input_dir, output_dir):
 
     rootdir = input_dir
 
+    list_my, list_epe = _get_color_list_for_stencils_transforms()
+
+    # Define the size of the square tiles for parallel processing
+    tile_size = 256
+
+    # Define the number of worker processes to use
+    num_processes = 12
+
     # rootdir = os.fsencode(rootdir)
-    for parent_dir in os.listdir(rootdir):
+    for parent_dir in tqdm(os.listdir(rootdir)):
         # filename = os.fsdecode(file)
         parent_dir_path = os.path.join(rootdir, parent_dir)
         if (os.path.isdir(parent_dir_path)):
             screenshot_dir_path = os.path.join(parent_dir_path, "screenshot")
             if (os.path.isdir(screenshot_dir_path)):
-                for file in os.listdir(screenshot_dir_path):
+                for file in tqdm(os.listdir(screenshot_dir_path)):
                     if file.endswith('.png' or '.PFM'):
                         for current_buffer in buffers_of_interest_255rgb:
                             file_to_pick = file
                             file_to_read_path = os.path.join(parent_dir_path,
                                                              current_buffer, file_to_pick)
 
-                            img_buff = cv2.imread(file_to_read_path)
-                            # img_buff = cv2.resize(img_buff, (screenshot_w, screenshot_h))
-                            # concatenate to one npz file
-                            assert (len(img_buff.shape) == 3)
-
-                            # cars
-                            img_buff[img_buff == (88, 207, 100)] = 26
-                            img_buff[img_buff == (49, 89, 160)] = 27
-
-                            # persons
-                            img_buff[img_buff == (25, 175, 120)] = 24
-                            img_buff[img_buff == (196, 30, 8)] = 25
-
-                            #cars
-                            #rgb, 88;207;100
-                            #rgb, 49;89;160
-                            #ppl
-                            #rgb 25;175;120
-                            #rgb 196;30;8
-
-                            os.makedirs(os.path.join(output_dir, parent_dir, "gray_stencils"), exist_ok=True)
                             output_file_path = os.path.join(output_dir, parent_dir, "gray_stencils", file_to_pick)
-                            cv2.imwrite(output_file_path, img_buff[:, :, 1])
+
+                            if os.path.isfile(output_file_path):
+                                print(f"skipping {output_file_path}")
+                            else:
+                                img_buff = cv2.imread(file_to_read_path)
+                                img_buff = cv2.cvtColor(img_buff, cv2.COLOR_BGR2RGB)
+
+                                # Create a list of tile indices
+                                tile_indices = [(i, j) for i in range(0, img_buff.shape[0], tile_size) for j in
+                                                range(0, img_buff.shape[1], tile_size)]
+
+                                # Create a multiprocessing pool with the specified number of processes
+                                pool = mp.Pool(num_processes)
+
+                                # Process each tile in parallel using the multiprocessing pool
+                                # pool.map(process_tile, tile_indices)
+                                # Create a partial function with the fixed arguments
+                                # Cython-based speed up
+                                # @todo in python it is super non-efficient as each process will copy the content
+                                # but probably it is faster doing it like that anyway that using numpy broadcasting in
+                                # mask list.
+                                partial_process_tile = partial(process_tile, img_buff=img_buff, list1=list_my,
+                                                               list2=list_epe, tile_size=tile_size,
+                                                               modify_image=modify_image)
+
+                                results = pool.map(partial_process_tile, tile_indices)
+
+                                for tile, tile_index in results:
+                                    i, j = tile_index
+                                    img_buff[i:i + tile_size, j:j + tile_size] = tile
+
+                                # Close the multiprocessing pool
+                                pool.close()
+
+                                # img_buff = cv2.resize(img_buff, (screenshot_w, screenshot_h))
+                                assert (len(img_buff.shape) == 3)
+
+                                os.makedirs(os.path.join(output_dir, parent_dir, "gray_stencils"), exist_ok=True)
+                                output_file_path = os.path.join(output_dir, parent_dir, "gray_stencils", file_to_pick)
+                                cv2.imwrite(output_file_path, img_buff[:, :, 0])
 
 def create_training_txt(input_dir, output_dir):
     '''
@@ -238,7 +351,7 @@ def create_training_txt(input_dir, output_dir):
     rootdir = input_dir
 
     # rootdir = os.fsencode(rootdir)
-    for parent_dir in os.listdir(rootdir):
+    for parent_dir in tqdm(os.listdir(rootdir)):
         # filename = os.fsdecode(file)
         parent_dir_path = os.path.join(rootdir, parent_dir)
         if (os.path.isdir(parent_dir_path)):
@@ -319,15 +432,15 @@ def main(args):
     resize = args["resize"]
     do_create_training_txt = args["create_training_txt"]
 
-    if(resize):
+    if resize:
         resize_screenshots(input_dir, output_dir)
-    if(yt_vid):
+    if yt_vid:
         make_yt_vid(input_dir, output_dir)
-    if(numpy_npz):
+    if numpy_npz:
         make_numpy_npz(input_dir, output_dir)
-    if(stencil_to_gray):
+    if stencil_to_gray:
         stencil_rgb_to_gray(input_dir, output_dir)
-    if(do_create_training_txt):
+    if do_create_training_txt:
         create_training_txt(input_dir, output_dir)
 
 

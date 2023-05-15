@@ -20,16 +20,26 @@ My stack:
 
 ## Get Unreal Engine
 
-### UE 5.1 stock version (no Stencil support)
+Compatibility version table
 
-You need 5.1 Unreal Engine Version (worked also in 5.01-5.03 in the past), you can use marketplace ue5 build.
-Note with version 5.1 and older, you will not have any segmentation masks except only humans. This is because back then nanite was not working with custom stencil buffer writing.
+| CitySample    | Unreal Engine    | Comments             |
+| ------------- | ---------------- | -------------------- |
+| 5.0           | 5.0              | No Stencil Mask Supported |
+| 5.1           | 5.1              | No Stencil Mask Supported |
+| 5.1           | custom ue-5 main | Stencil Mask Supported, needs custom ue5 build (see below)   |
+| 5.2           | 5.2              | Currently no cars and humans see (no mass entities thread)(https://forums.unrealengine.com/t/ue-5-2-citysample-5-2-no-mass-entities/1163486/2) |
+
+### UE 5.0, 5.1, 5.2 stock versions
+
+You can use marketplace ue5 build.
+Note with version 5.1 and older, you will not have any segmentation masks except only humans. This is because back then nanite was not working with custom stencil buffer writing. Also CitySample at 5.2 does not have any moving cars and walking humans.
 
 
-### Custom UE 5.2 (Stencils are supported)
+### Custom before UE 5.2 + CitySample 5.1 (Stencils are supported)
+
+The only branch where most things works and this is the branch I am now using. You will need to compile UE5.
 
 - git clone ue-5 main branch from official repos https://github.com/EpicGames/UnrealEngine/tree/ue5-main 
-
 
 - checkout exactly this commit. Note: it will not work with more newer commits! (Changes in Mass will not compile with current citysample) 
 ```bash
@@ -100,7 +110,7 @@ After packaging, you are ready to go wtih the next steps.
 
 > :warning: **Record button broken - use python script**: Please note that for now red Recording airsim button is not working (will crash). This is because I didnt fix yet velococity 3 channel float buffer yet there. For now I am grabbing gbuffers and image from a python script. For now, please also use python script instead of record button.
 
-> :warning: **Nanite stencils not yet supported in UE5.1**: For now (as of UE 5.1) nanite does not support writing to stencil buffers (see in official doc Nanite Virtualized Geometry ). (humans/character stencil works, but car/street/buidling are not writing to stencil buffers). As a workaround I am adding invisible to rgb no-nanite meshes - will update this tutorial later how I am making it, but I did it only for cars models so far.
+> :warning: **Nanite stencils not yet supported in UE5.1 and earlier**: As of UE 5.1, nanite does not support writing to stencil buffers (see in official doc Nanite Virtualized Geometry ). (humans/character stencil works, but car/street/buidling are not writing to stencil buffers).
 
 > :information_source: **Solution for not correct VS toolchain picked up when building CitySample**: I have set confing in Citysample project now explicitly to use VS 2022. But still, if you have older Visual Studio installed in parallel, other toolchain might be choose by default. To change toolchain, open UE5, create empty project, and set toolchain for the project and for the editor in two places. 
 > - Edit → Project Settings → Platforms → Windows → Toolchain → CompilerVersion → VS 2022
