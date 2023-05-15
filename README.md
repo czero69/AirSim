@@ -24,10 +24,10 @@ Compatibility version table
 
 | CitySample    | Unreal Engine    | Comments             |
 | ------------- | ---------------- | -------------------- |
-| 5.0           | 5.0              | No Stencil Mask Supported |
-| 5.1           | 5.1              | No Stencil Mask Supported |
-| 5.1           | custom ue-5 main | Stencil Mask Supported, needs custom ue5 build (see below)   |
-| 5.2           | 5.2              | Currently no cars and humans see (no mass entities thread)(https://forums.unrealengine.com/t/ue-5-2-citysample-5-2-no-mass-entities/1163486/2) |
+| 5.0           | 5.0              | No stencil masks support |
+| 5.1           | 5.1              | No stencil masks Support |
+| 5.1           | custom ue-5 main | Stencil mask supported! needs custom ue5 build (see below)   |
+| 5.2           | 5.2              | Currently no cars and humans see (no mass entities thread)[https://forums.unrealengine.com/t/ue-5-2-citysample-5-2-no-mass-entities/1163486/2] |
 
 ### UE 5.0, 5.1, 5.2 stock versions
 
