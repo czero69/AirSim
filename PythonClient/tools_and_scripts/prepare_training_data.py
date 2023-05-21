@@ -328,7 +328,143 @@ def stencil_rgb_to_gray(input_dir, output_dir):
                                 output_file_path = os.path.join(output_dir, parent_dir, "gray_stencils", file_to_pick)
                                 cv2.imwrite(output_file_path, img_buff[:, :, 0])
 
-def create_training_txt(input_dir, output_dir):
+def create_training_txt():
+    data_dict = {
+        "/mnt/d/Kamil/data_collected/airsim_drone/dataset_coffing": "fake",
+        "/mnt/d/Kamil/data_collected/first_vids_matrix_like_real": "real",
+        # Add more paths and types to the dictionary as needed
+    }
+
+    for path, data_type in data_dict.items():
+        print(f"Processing: {path}")
+
+        if data_type == "fake":
+            dirs_of_interest = ["screenshot", "msegs/gray4k", "NPZs", "gray_stencils"]
+            csv_data = []
+
+            for subdir in os.listdir(path):
+                subdir_path = os.path.join(path, subdir)
+
+                if not os.path.isdir(subdir_path):
+                    continue
+
+                screenshot_dir = os.path.join(subdir_path, "screenshot")
+                msegs_gray4k_dir = os.path.join(subdir_path, "msegs/gray4k")
+                npzs_dir = os.path.join(subdir_path, "NPZs")
+                gray_stencils_dir = os.path.join(subdir_path, "gray_stencils")
+
+                screen_files = sorted(os.listdir(screenshot_dir))
+                npz_files = sorted(os.listdir(npzs_dir))
+                msegs_gray4k_files = sorted(os.listdir(msegs_gray4k_dir))
+                gray_stencils_files = sorted(os.listdir(gray_stencils_dir))
+
+                for screen_file, npz_file, msegs_gray4k_file, gray_stencil_file in zip(
+                        screen_files, npz_files, msegs_gray4k_files, gray_stencils_files
+                ):
+                    screen_path = os.path.abspath(os.path.join(screenshot_dir, screen_file))
+                    npz_path = os.path.abspath(os.path.join(npzs_dir, npz_file))
+                    msegs_gray4k_path = os.path.abspath(os.path.join(msegs_gray4k_dir, msegs_gray4k_file))
+                    gray_stencils_path = os.path.abspath(os.path.join(gray_stencils_dir, gray_stencil_file))
+
+                    csv_data.append([screen_path, msegs_gray4k_path, npz_path, gray_stencils_path])
+
+            output_dir = os.path.dirname(path)
+            parent_dir = os.path.basename(path)
+            output_csv_path = os.path.join(output_dir, parent_dir + ".txt")
+
+            with open(output_csv_path, "w", encoding="UTF8", newline="") as f:
+                writer = csv.writer(f)
+                writer.writerows(csv_data)
+
+        elif data_type == "real":
+            dirs_of_interest = ["screenshot", "msegs/gray4k"]
+            csv_data = []
+
+            for subdir in os.listdir(path):
+                subdir_path = os.path.join(path, subdir)
+
+                if not os.path.isdir(subdir_path):
+                    continue
+
+                screenshot_dir = os.path.join(subdir_path, "screenshot")
+                msegs_gray4k_dir = os.path.join(subdir_path, "msegs/gray4k")
+
+                screen_files = sorted(os.listdir(screenshot_dir))
+                msegs_gray4k_files = sorted(os.listdir(msegs_gray4k_dir))
+
+                for screen_file, msegs_gray4k_file in zip(screen_files, msegs_gray4k_files):
+                    screen_path = os.path.abspath(os.path.join(screenshot_dir, screen_file))
+                    msegs_gray4k_path = os.path.abspath(os.path.join(msegs_gray4k_dir, msegs_gray4k_file))
+
+                    csv_data.append([screen_path, msegs_gray4k_path])
+
+            output_dir = os.path.dirname(path)
+            parent_dir = os.path.basename(path)
+
+            output_csv_path = os.path.join(output_dir, parent_dir + ".txt")
+
+            with open(output_csv_path, "w", encoding="UTF8", newline="") as f:
+                writer = csv.writer(f)
+                writer.writerows(csv_data)
+
+def convert_to_windows_paths():
+    # run from windows
+    # List of CSV files to process (in windows)
+    csv_files = ["D:\\Kamil\\data_collected\\first_vids_matrix_like_real.txt",
+                 "D:\\Kamil\\data_collected\\airsim_drone\\dataset_coffing.txt"]
+
+    # Process each CSV file
+    for csv_file in csv_files:
+        modified_rows = []
+        with open(csv_file, 'r') as file:
+            reader = csv.reader(file)
+            for row in reader:
+                modified_row = []
+                for entry in row:
+                    # Replace the Linux-like path with the Windows-friendly path
+                    windows_path = entry.replace('/mnt/d/Kamil/data_collected/', 'D:\\Kamil\\data_collected\\')
+                    windows_path = windows_path.replace('/', os.sep)
+                    modified_row.append(windows_path)
+                modified_rows.append(modified_row)
+
+        # Create a new filename for the modified CSV file
+        filename, ext = os.path.splitext(csv_file)
+        new_filename = filename + '_win' + ext
+
+        with open(new_filename, 'w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerows(modified_rows)
+
+        print(f"Converted {csv_file} to {new_filename}")
+
+def drop_alpha_channels_in_screenshots():
+    patches = ["/mnt/d/Kamil/data_collected/airsim_drone/dataset_coffing"]  # Replace with your list of patch paths
+
+    for patch_path in patches:
+        subdirectories = os.listdir(patch_path)
+        for subdir in tqdm(subdirectories):
+            subdir_path = os.path.join(patch_path, subdir)
+
+            if not os.path.isdir(subdir_path):
+                continue
+
+            screenshot_dir = os.path.join(subdir_path, "screenshot")
+            image_files = os.listdir(screenshot_dir)
+
+            for image_file in image_files:
+                if image_file.endswith(".png"):
+                    image_path = os.path.join(screenshot_dir, image_file)
+                    image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
+
+                    if image.shape[2] == 4:  # Check if image has 4 channels (RGBA)
+                        # Convert to 3 channels (RGB) by dropping the alpha channel
+                        image = image[:, :, :3]
+                        # Write the modified image, overwriting the original file
+                        cv2.imwrite(image_path, image)
+
+def deprecated_create_training_txt(input_dir, output_dir):
+    # @TODO this method is deprecated
+
     '''
      The pipeline expects for each dataset a txt file containing paths to all images.
      Each line should contain paths to image, robust label map, gbuffer file, and ground truth label map, all separated by commas.
@@ -388,6 +524,61 @@ def create_training_txt(input_dir, output_dir):
                     # write multiple rows
                     writer.writerows(csv_data)
 
+def resize_msegs():
+    patches = [
+        # "/mnt/d/Kamil/data_collected/airsim_drone/dataset_coffing",
+        "/mnt/d/Kamil/data_collected/first_vids_matrix_like_real/",
+        # Add more patch paths as needed
+    ]
+
+    for patch_path in patches:
+        patch_name = os.path.basename(patch_path)
+        print(f"Processing patch: {patch_name}")
+
+        subdirectories = sorted(os.listdir(patch_path))
+
+
+        for subdir in tqdm(subdirectories):
+            subdir_path = os.path.join(patch_path, subdir)
+
+            # Check if subdir is a directory
+            if not os.path.isdir(subdir_path):
+                continue
+
+            screenshot_dir = os.path.join(subdir_path, "screenshot")
+            msegs_gray_dir = os.path.join(subdir_path, "msegs/gray")
+            msegs_gray4k_dir = os.path.join(subdir_path, "msegs/gray4k")
+
+            # Create msegs.gray4k directory if it doesn't exist
+            os.makedirs(msegs_gray4k_dir, exist_ok=True)
+
+            # Get the list of files in screenshot_dir
+            screenshot_files = sorted(os.listdir(screenshot_dir))
+
+            for screenshot_file in screenshot_files:
+                screenshot_path = os.path.join(screenshot_dir, screenshot_file)
+                gray_mask_file = os.path.splitext(screenshot_file)[0] + ".png"
+                gray_mask_path = os.path.join(msegs_gray_dir, gray_mask_file)
+                gray_mask4k_path = os.path.join(msegs_gray4k_dir, gray_mask_file)
+
+                # Check if gray mask exists
+                if not os.path.isfile(gray_mask_path):
+                    print(f"Error: Gray mask not found for subdir: {subdir}")
+                    continue
+
+                # Load the gray mask
+                gray_mask = cv2.imread(gray_mask_path, cv2.IMREAD_GRAYSCALE)
+
+                # Upscale the gray mask to 4k using INTER_NEAREST
+                gray_mask4k = cv2.resize(gray_mask, (3840, 2160), interpolation=cv2.INTER_NEAREST)
+
+                # Save the upscaled gray mask in msegs.gray4k directory
+                cv2.imwrite(gray_mask4k_path, gray_mask4k)
+
+                # print(f"Upscaled and saved gray mask for subdir: {subdir}")
+
+        print(f"Finished processing patch: {patch_name}")
+
 def resize_screenshots(input_dir, output_dir, output_size = (3840,2160)):
 
     buffers_to_resize = ['gray'] #@TODO not yet supported ['screenshot', 'gray']
@@ -431,6 +622,9 @@ def main(args):
     stencil_to_gray = args["stencil_to_gray"]
     resize = args["resize"]
     do_create_training_txt = args["create_training_txt"]
+    do_resize_msegs = args["resize_msegs"]
+    do_drop_alpha_channels = args["drop_alpha_channel"]
+    do_convert_to_win_paths = args["windows_convert_paths"]
 
     if resize:
         resize_screenshots(input_dir, output_dir)
@@ -441,7 +635,13 @@ def main(args):
     if stencil_to_gray:
         stencil_rgb_to_gray(input_dir, output_dir)
     if do_create_training_txt:
-        create_training_txt(input_dir, output_dir)
+        create_training_txt()
+    if do_resize_msegs:
+        resize_msegs()
+    if do_drop_alpha_channels:
+        drop_alpha_channels_in_screenshots()
+    if do_convert_to_win_paths:
+        convert_to_windows_paths()
 
 
 
@@ -498,6 +698,30 @@ if __name__ == "__main__":
         nargs="?",
         const=True,
         help="resize screenshots for mseg input and save in forex. screenshot_1920x1080",
+    )
+    parser.add_argument(
+        "--resize_msegs",
+        type=bool,
+        default=False,
+        nargs="?",
+        const=True,
+        help="resize msegs to 4k. Provide patches inside python code",
+    )
+    parser.add_argument(
+        "--drop_alpha_channel",
+        type=bool,
+        default=False,
+        nargs="?",
+        const=True,
+        help="iterates all screenshot and rewriting images 4chann->3chann by dropping alpha channel",
+    )
+    parser.add_argument(
+        "--windows_convert_paths",
+        type=bool,
+        default=False,
+        nargs="?",
+        const=True,
+        help="convert paths from linux to windows system",
     )
     parser.add_argument(
         "--verbose",
