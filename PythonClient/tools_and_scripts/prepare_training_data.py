@@ -135,6 +135,15 @@ def make_numpy_npz(input_dir, output_dir, target_type=np.float16, inspect=False,
                                 # normalize it so max value is close to 1
                                 img_buff /= 20000
 
+                                # TODO test alternative log scaling
+                                #img_buff = np.log1p(img_buff)
+                                #img_buff = img_buff / np.log1p(20000)
+
+                                # TODO below is just inverse OP for the above log scaling
+                                #scaling_factor = np.log1p(20000)  # the same scaling factor used when encoding the depth values
+                                #y = buff_as_fp16.astype(np.float64)  # convert back to a higher precision type to avoid precision issues
+                                #x = np.expm1(y * scaling_factor)  # reverse the scaling
+
                                 # render it like that to rgb
                                 '''
                                 print("img_buff shp:", img_buff.shape)
