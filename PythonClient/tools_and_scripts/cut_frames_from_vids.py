@@ -1,8 +1,8 @@
 import os
 import cv2
-import argparse
 from pathlib import Path
 from tqdm import tqdm
+import argparse
 
 def main(input_file):
     base_dir = Path(input_file).parent
@@ -29,35 +29,38 @@ def main(input_file):
             cap = cv2.VideoCapture(str(video_path))
             height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
             fps = cap.get(cv2.CAP_PROP_FPS)
-            frame_count = 0
+            total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
             if not height or not fps:
                 print(f"Could not determine the height or the fps of the video: {video_path}")
                 continue
 
-            total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            frame_indices = range(0, total_frames, int(10*fps))
 
-            pbar = tqdm(total=total_frames, desc=f"Extracting frames from {filename}")
+            pbar = tqdm(total=len(frame_indices), desc=f"Extracting frames from {filename}")
 
-            while True:
+            for frame_index in frame_indices:
+                cap.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
                 ret, frame = cap.read()
+                
                 if not ret:
                     break
 
-                if frame_count % int(10*fps) == 0:
-                    if height != 2160:
-                        frame = cv2.resize(frame, (int(frame.shape[1]*2160/frame.shape[0]), 2160))
-                    cv2.imwrite(f"{dir}/{unique_id}/screenshot/output_{frame_count//int(10*fps):04d}.png", frame)
+                if height != 2160:
+                    frame = cv2.resize(frame, (int(frame.shape[1]*2160/frame.shape[0]), 2160))
+                
+                cv2.imwrite(f"{dir}/{unique_id}/screenshot/output_{frame_index//int(10*fps):04d}.png", frame)
 
-                frame_count += 1
                 pbar.update(1)
 
             cap.release()
             pbar.close()
 
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Extract frames from video files.")
-    parser.add_argument('input_file', type=str, help='Input file containing video file paths')
+    parser = argparse.ArgumentParser(description='Extract frames from videos.')
+    parser.add_argument('input_file', type=str, help='Path to the text file containing video paths.')
+
     args = parser.parse_args()
     
     main(args.input_file)
