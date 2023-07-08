@@ -337,14 +337,14 @@ def stencil_rgb_to_gray(input_dir, output_dir):
                                 output_file_path = os.path.join(output_dir, parent_dir, "gray_stencils", file_to_pick)
                                 cv2.imwrite(output_file_path, img_buff[:, :, 0])
 
-def create_training_txt():
+def create_training_txt(fake_path, real_path):
     data_dict = {
-        "/mnt/d/Kamil/data_collected/airsim_drone/dataset_coffing": "fake",
-        "/mnt/d/Kamil/data_collected/first_vids_matrix_like_real": "real",
+        'fake' : fake_path,
+        'real' : real_path,
         # Add more paths and types to the dictionary as needed
     }
 
-    for path, data_type in data_dict.items():
+    for data_type, path in data_dict.items():
         print(f"Processing: {path}")
 
         if data_type == "fake":
@@ -536,7 +536,7 @@ def deprecated_create_training_txt(input_dir, output_dir):
 def resize_msegs():
     patches = [
         # "/mnt/d/Kamil/data_collected/airsim_drone/dataset_coffing",
-        "/mnt/d/Kamil/data_collected/first_vids_matrix_like_real/",
+        "/mnt/d/Kamil/data_collected/first_vids_matrix_like_real/real_training_v002/upscale_msegs",
         # Add more patch paths as needed
     ]
 
@@ -634,6 +634,8 @@ def main(args):
     do_resize_msegs = args["resize_msegs"]
     do_drop_alpha_channels = args["drop_alpha_channel"]
     do_convert_to_win_paths = args["windows_convert_paths"]
+    fake_input_dir = args["fake_input_dir"]
+    real_input_dir = args["real_input_dir"]
 
     if resize:
         resize_screenshots(input_dir, output_dir)
@@ -644,7 +646,8 @@ def main(args):
     if stencil_to_gray:
         stencil_rgb_to_gray(input_dir, output_dir)
     if do_create_training_txt:
-        create_training_txt()
+        # @todo this possibly will be refactored to separate script on EPE site
+        create_training_txt(fake_path=fake_input_dir, real_path=real_input_dir)
     if do_resize_msegs:
         resize_msegs()
     if do_drop_alpha_channels:
@@ -661,6 +664,18 @@ if __name__ == "__main__":
         type=str,
         help="folder with separate recorded data runs",
         default="D:/Kamil/data_collected/airsim_drone/",
+    )
+    parser.add_argument(
+        "--fake_input_dir",
+        type=str,
+        help="folder with separate recorded data runs",
+        default="/mnt/d/Kamil/data_collected/airsim_drone/dataset_coffing",
+    )
+    parser.add_argument(
+        "--real_input_dir",
+        type=str,
+        help="folder with separate recorded data runs",
+        default="/mnt/d/Kamil/data_collected/first_vids_matrix_like_real/real_training_v002",
     )
     parser.add_argument(
         "--output_dir",

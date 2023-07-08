@@ -3,15 +3,17 @@ import cv2
 from pathlib import Path
 from tqdm import tqdm
 import argparse
+from pathlib import Path
 
 def main(input_file):
     base_dir = Path(input_file).parent
 
-    with open(input_file, 'r') as file:
+    # Print the file name
+    with open(Path(input_file), 'r', encoding='utf-8') as file:
         lines = file.readlines()
         
         for line in tqdm(lines, desc="Processing videos"):
-            video_path = base_dir / line.strip()
+            video_path = base_dir / Path(line.strip())
             print(f"\nChecking file: {video_path}")
 
             if not video_path.is_file():

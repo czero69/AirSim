@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # my_path="/mnt/d/Kamil/data_collected/airsim_drone/dataset_coffing"
-my_path="/mnt/d/Kamil/data_collected/first_vids_matrix_like_real"
+my_path="/mnt/d/Kamil/data_collected/first_vids_matrix_like_real/to_msegs"
 
 for dir_name in "$my_path"/*; do
     if [ -d "$dir_name" ]; then
