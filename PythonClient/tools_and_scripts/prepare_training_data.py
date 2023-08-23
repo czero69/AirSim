@@ -7,9 +7,7 @@ import numpy as np
 import struct
 import csv
 from tqdm import tqdm
-
-import multiprocessing as mp
-from functools import partial
+from datetime import datetime
 
 def get_total_screenfiles(dir):
     count = 0
@@ -77,7 +75,6 @@ def make_yt_vid(input_dir, output_dir):
     #        print(os.path.join(subdir, dir))
     # for file in files:
     # print(os.path.join(subdir, file))
-
 
 def read_pfm(filename):
     with Path(filename).open('rb') as pfm_file:
@@ -198,6 +195,8 @@ def make_numpy_npz(input_dir, output_dir, target_type=np.float16, inspect=False,
 def _get_color_list_for_stencils_transforms():
     # transforms from my samples (list1) to epe format (list2)
 
+    # TODO: dictionary maybe
+
     list1, list2 = [], []
     # undefined (mostly street furniture)
     list1.append((255, 255, 255))
@@ -255,31 +254,28 @@ def _get_color_list_for_stencils_transforms():
 
     return list1, list2
 
-def process_tile(img_buff, list1, list2, tile_size, modify_image, tile_index):
+def modify_image(img_buff, list1, list2):
+    start = datetime.now()
+    for i in range(len(list1)):
+        img_buff = np.where(img_buff == list1[i], list2[i], img_buff)
+    end = datetime.now()
+    time = end - start
+    print(time)
+
+#niepotrzebne
+def process_tile(img_buff, tile_index, list1, list2, tile_size, modify_image):
     i, j = tile_index
     tile = img_buff[i:i+tile_size, j:j+tile_size]
     modify_image(tile, list1, list2)
     return tile, tile_index
 
+
 def stencil_rgb_to_gray(input_dir, output_dir):
-    # pip install Cython
-    # python setup_epe_stencils_cython.py build_ext --inplace
-    from get_epe_stencils import modify_image
-
-    screenshot_w = 3840
-    screenshot_h = 2160
-
     buffers_of_interest_255rgb = ['5']  # '5', '10'
 
     rootdir = input_dir
 
     list_my, list_epe = _get_color_list_for_stencils_transforms()
-
-    # Define the size of the square tiles for parallel processing
-    tile_size = 256
-
-    # Define the number of worker processes to use
-    num_processes = 12
 
     # rootdir = os.fsencode(rootdir)
     for parent_dir in tqdm(os.listdir(rootdir)):
@@ -302,33 +298,10 @@ def stencil_rgb_to_gray(input_dir, output_dir):
                             else:
                                 img_buff = cv2.imread(file_to_read_path)
                                 img_buff = cv2.cvtColor(img_buff, cv2.COLOR_BGR2RGB)
+                                print("buff shp: ", img_buff.shape)
 
-                                # Create a list of tile indices
-                                tile_indices = [(i, j) for i in range(0, img_buff.shape[0], tile_size) for j in
-                                                range(0, img_buff.shape[1], tile_size)]
-
-                                # Create a multiprocessing pool with the specified number of processes
-                                pool = mp.Pool(num_processes)
-
-                                # Process each tile in parallel using the multiprocessing pool
-                                # pool.map(process_tile, tile_indices)
-                                # Create a partial function with the fixed arguments
-                                # Cython-based speed up
-                                # @todo in python it is super non-efficient as each process will copy the content
-                                # but probably it is faster doing it like that anyway that using numpy broadcasting in
-                                # mask list.
-                                partial_process_tile = partial(process_tile, img_buff=img_buff, list1=list_my,
-                                                               list2=list_epe, tile_size=tile_size,
-                                                               modify_image=modify_image)
-
-                                results = pool.map(partial_process_tile, tile_indices)
-
-                                for tile, tile_index in results:
-                                    i, j = tile_index
-                                    img_buff[i:i + tile_size, j:j + tile_size] = tile
-
-                                # Close the multiprocessing pool
-                                pool.close()
+                                #self._get_color_list_for_stencils_transforms()
+                                modify_image(img_buff, list1=list_my, list2=list_epe)
 
                                 # img_buff = cv2.resize(img_buff, (screenshot_w, screenshot_h))
                                 assert (len(img_buff.shape) == 3)
@@ -337,14 +310,14 @@ def stencil_rgb_to_gray(input_dir, output_dir):
                                 output_file_path = os.path.join(output_dir, parent_dir, "gray_stencils", file_to_pick)
                                 cv2.imwrite(output_file_path, img_buff[:, :, 0])
 
-def create_training_txt(fake_path, real_path):
+def create_training_txt():
     data_dict = {
-        'fake' : fake_path,
-        'real' : real_path,
+        "/mnt/d/Kamil/data_collected/airsim_drone/dataset_coffing": "fake",
+        "/mnt/d/Kamil/data_collected/first_vids_matrix_like_real": "real",
         # Add more paths and types to the dictionary as needed
     }
 
-    for data_type, path in data_dict.items():
+    for path, data_type in data_dict.items():
         print(f"Processing: {path}")
 
         if data_type == "fake":
@@ -447,7 +420,7 @@ def convert_to_windows_paths():
         print(f"Converted {csv_file} to {new_filename}")
 
 def drop_alpha_channels_in_screenshots():
-    patches = ["/mnt/d/Kamil/data_collected/airsim_drone/dataset_coffing"]  # Replace with your list of patch paths
+    patches = ["/mnt/c/users/Maciej/downloads/dataset_two_example_samples"]  # Replace with your list of patch paths
 
     for patch_path in patches:
         subdirectories = os.listdir(patch_path)
@@ -536,7 +509,7 @@ def deprecated_create_training_txt(input_dir, output_dir):
 def resize_msegs():
     patches = [
         # "/mnt/d/Kamil/data_collected/airsim_drone/dataset_coffing",
-        "/mnt/d/Kamil/data_collected/first_vids_matrix_like_real/real_training_v002/upscale_msegs",
+        "/mnt/c/users/Maciej/downloads/dataset_two_example_samples/",
         # Add more patch paths as needed
     ]
 
@@ -634,8 +607,6 @@ def main(args):
     do_resize_msegs = args["resize_msegs"]
     do_drop_alpha_channels = args["drop_alpha_channel"]
     do_convert_to_win_paths = args["windows_convert_paths"]
-    fake_input_dir = args["fake_input_dir"]
-    real_input_dir = args["real_input_dir"]
 
     if resize:
         resize_screenshots(input_dir, output_dir)
@@ -646,8 +617,7 @@ def main(args):
     if stencil_to_gray:
         stencil_rgb_to_gray(input_dir, output_dir)
     if do_create_training_txt:
-        # @todo this possibly will be refactored to separate script on EPE site
-        create_training_txt(fake_path=fake_input_dir, real_path=real_input_dir)
+        create_training_txt()
     if do_resize_msegs:
         resize_msegs()
     if do_drop_alpha_channels:
@@ -664,18 +634,6 @@ if __name__ == "__main__":
         type=str,
         help="folder with separate recorded data runs",
         default="D:/Kamil/data_collected/airsim_drone/",
-    )
-    parser.add_argument(
-        "--fake_input_dir",
-        type=str,
-        help="folder with separate recorded data runs",
-        default="/mnt/d/Kamil/data_collected/airsim_drone/dataset_coffing",
-    )
-    parser.add_argument(
-        "--real_input_dir",
-        type=str,
-        help="folder with separate recorded data runs",
-        default="/mnt/d/Kamil/data_collected/first_vids_matrix_like_real/real_training_v002",
     )
     parser.add_argument(
         "--output_dir",
